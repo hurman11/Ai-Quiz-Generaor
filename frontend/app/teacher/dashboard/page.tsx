@@ -79,6 +79,7 @@ export default function TeacherDashboardPage() {
     setActiveQuiz(null);
   };
 
+  const handleCopyLink = () => {
     const link = typeof window !== "undefined" ? `${window.location.origin}/student` : "http://localhost:3000/student";
     navigator.clipboard.writeText(link);
     setCopied(true);
