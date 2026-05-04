@@ -74,9 +74,15 @@ export default function TeacherDashboardPage() {
     router.push("/");
   };
 
-  const handleClearQuiz = () => {
+  const handleClearQuiz = async () => {
     localStorage.removeItem("active_quiz");
     setActiveQuiz(null);
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    try {
+      await fetch(`${API_URL}/active-quiz`, { method: "DELETE" });
+    } catch {
+      // ignore
+    }
   };
 
   const handleCopyLink = () => {

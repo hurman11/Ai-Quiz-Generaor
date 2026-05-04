@@ -40,8 +40,27 @@ SYSTEM_PROMPT = """You are a quiz generator. Respond ONLY with valid JSON matchi
   ]
 }"""
 
-# In-memory results storage
+# In-memory storage
 results: list = []
+active_quiz_data: dict | None = None
+
+@app.get("/active-quiz")
+async def get_active_quiz():
+    if not active_quiz_data:
+        raise HTTPException(status_code=404, detail="No active quiz available")
+    return active_quiz_data
+
+@app.post("/active-quiz")
+async def set_active_quiz(quiz: dict):
+    global active_quiz_data
+    active_quiz_data = quiz
+    return {"success": True}
+
+@app.delete("/active-quiz")
+async def clear_active_quiz():
+    global active_quiz_data
+    active_quiz_data = None
+    return {"success": True}
 
 
 class QuizRequest(BaseModel):

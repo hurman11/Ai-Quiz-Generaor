@@ -25,19 +25,23 @@ export default function StudentPage() {
 
   // Check for active quiz
   useEffect(() => {
-    const stored = localStorage.getItem("active_quiz");
-    if (stored) {
+    const fetchActiveQuiz = async () => {
       try {
-        const parsed: Quiz = JSON.parse(stored);
-        setQuiz(parsed);
-        setUserAnswers(new Array(parsed.questions.length).fill(""));
-        setPhase("welcome");
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const res = await fetch(`${API_URL}/active-quiz`);
+        if (res.ok) {
+          const parsed: Quiz = await res.json();
+          setQuiz(parsed);
+          setUserAnswers(new Array(parsed.questions.length).fill(""));
+          setPhase("welcome");
+        } else {
+          setPhase("waiting");
+        }
       } catch {
         setPhase("waiting");
       }
-    } else {
-      setPhase("waiting");
-    }
+    };
+    fetchActiveQuiz();
   }, []);
 
   // Cleanup timers on unmount

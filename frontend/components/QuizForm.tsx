@@ -141,9 +141,19 @@ export default function QuizForm() {
         throw new Error(errData.detail || `Server error: ${res.status}`);
       }
 
-      const quiz: Quiz = await res.json();
+      const quiz = await res.json();
+
+      // Push to backend so students can access it
+      await fetch(`${API_URL}/active-quiz`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(quiz),
+      });
+
+      // Save locally for teacher dashboard
       localStorage.setItem("active_quiz", JSON.stringify(quiz));
-      setSuccess(true);
+      // Force reload dashboard to show active quiz tab
+      window.location.reload();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Connection failed.";
       setError(message);
