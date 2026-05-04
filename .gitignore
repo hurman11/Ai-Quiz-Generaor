@@ -1,0 +1,30 @@
+# ─── Dependencies ───
+node_modules/
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# ─── Environment secrets ───
+.env
+.env.local
+.env.*.local
+
+# ─── Build outputs ───
+frontend/.next/
+frontend/out/
+*.egg-info/
+dist/
+build/
+
+# ─── IDE / OS ───
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ─── Misc ───
+*.log
+npm-debug.log*
