@@ -1,3 +1,12 @@
+---
+title: Ai Quiz Generator
+emoji: 📝
+colorFrom: green
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+---
 # Backend Code Explained — `main.py`
 
 A simple, beginner-friendly breakdown of how the QuizGen backend works.
