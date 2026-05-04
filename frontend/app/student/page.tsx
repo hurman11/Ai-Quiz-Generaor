@@ -212,17 +212,18 @@ export default function StudentPage() {
             it&apos;s ready, this page will show the quiz.
           </p>
           <button
-            onClick={() => {
-              const stored = localStorage.getItem("active_quiz");
-              if (stored) {
-                try {
-                  const parsed: Quiz = JSON.parse(stored);
+            onClick={async () => {
+              try {
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+                const res = await fetch(`${API_URL}/active-quiz`);
+                if (res.ok) {
+                  const parsed: Quiz = await res.json();
                   setQuiz(parsed);
                   setUserAnswers(new Array(parsed.questions.length).fill(""));
                   setPhase("welcome");
-                } catch {
-                  /* ignore */
                 }
+              } catch {
+                /* ignore */
               }
             }}
             className="btn-outline"
