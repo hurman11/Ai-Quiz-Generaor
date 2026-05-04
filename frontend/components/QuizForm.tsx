@@ -62,7 +62,8 @@ export default function QuizForm() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("http://localhost:8000/extract-text", {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const res = await fetch(`${API_URL}/extract-text`, {
         method: "POST",
         body: formData,
       });
@@ -124,7 +125,8 @@ export default function QuizForm() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/generate-quiz", {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const res = await fetch(`${API_URL}/generate-quiz`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

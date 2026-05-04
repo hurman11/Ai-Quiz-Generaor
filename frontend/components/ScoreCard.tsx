@@ -66,7 +66,8 @@ export default function ScoreCard({
     if (submitted.current || !studentName) return;
     submitted.current = true;
 
-    fetch("http://localhost:8000/submit-result", {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    fetch(`${API_URL}/submit-result`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

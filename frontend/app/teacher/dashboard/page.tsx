@@ -50,7 +50,8 @@ export default function TeacherDashboardPage() {
   // Poll results every 5 seconds
   const fetchResults = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:8000/results");
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const res = await fetch(`${API_URL}/results`);
       if (res.ok) {
         const data: StudentResult[] = await res.json();
         setResults(data);
@@ -78,11 +79,13 @@ export default function TeacherDashboardPage() {
     setActiveQuiz(null);
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText("http://localhost:3000/student");
+    const link = typeof window !== "undefined" ? `${window.location.origin}/student` : "http://localhost:3000/student";
+    navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const studentLink = typeof window !== "undefined" ? `${window.location.origin}/student` : "http://localhost:3000/student";
 
   const averageScore =
     results.length > 0
@@ -212,7 +215,7 @@ export default function TeacherDashboardPage() {
                       </p>
                       <div className="flex items-center gap-2">
                         <code className="flex-1 rounded-md bg-bg-card border border-border px-3 py-2 text-sm text-text-primary">
-                          http://localhost:3000/student
+                          {studentLink}
                         </code>
                         <button
                           onClick={handleCopyLink}
