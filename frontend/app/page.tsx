@@ -28,8 +28,8 @@ export default function HomePage() {
       {/* ── Navbar ── */}
       <nav className="flex items-center justify-between px-4 sm:px-8 py-4 glass-nav z-10 w-full" style={{ background: "var(--bg-navbar)" }}>
         <div className="flex items-center gap-2">
-          <span className="text-2xl">📝</span>
-          <span className="font-bold text-white text-lg sm:text-xl">QuizGen</span>
+          <span className="text-2xl animate-pulse">⚡</span>
+          <span className="font-bold text-white text-lg sm:text-xl tracking-wider uppercase font-heading text-transparent bg-clip-text bg-[var(--gradient-brand)] drop-shadow-[0_0_10px_rgba(124,58,237,0.5)]">Nexus</span>
         </div>
         <button
           onClick={() => router.push("/teacher/login")}
@@ -48,12 +48,12 @@ export default function HomePage() {
           animate="visible"
         >
           {/* ── Hero Text ── */}
-          <motion.div className="text-center max-w-2xl" variants={itemVariants}>
-            <h1 className="font-heading font-extrabold text-white leading-tight" style={{ fontSize: "clamp(1.6rem, 5vw, 2.8rem)" }}>
-              The Future of Interactive Learning
+          <motion.div className="text-center max-w-3xl" variants={itemVariants}>
+            <h1 className="font-heading font-extrabold text-white leading-tight drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]" style={{ fontSize: "clamp(1.8rem, 6vw, 3.2rem)" }}>
+              Ignite the Mind.<br/><span className="text-transparent bg-clip-text bg-[var(--gradient-brand)]">Automate the Rest.</span>
             </h1>
-            <p className="mt-4 text-text-secondary" style={{ fontSize: "clamp(0.875rem, 3vw, 1rem)" }}>
-              Generate highly-accurate, AI-powered quizzes instantly. Perfect for educators who want to save time and students who want to test their knowledge.
+            <p className="mt-6 text-[var(--text-secondary)] font-medium" style={{ fontSize: "clamp(0.95rem, 3vw, 1.1rem)" }}>
+              Enter the Nexus. Transform any lecture, PDF, or document into a competitive, high-stakes real-time assessment in seconds. Built for forward-thinking educators and relentless students.
             </p>
           </motion.div>
 

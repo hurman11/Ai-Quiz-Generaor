@@ -18,9 +18,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "QuizGen — AI-Powered Quiz Generator for Classrooms",
+  title: "Nexus | High-Octane AI Assessments",
   description:
-    "Generate AI-powered quizzes on any subject. Teachers create, students take — all in a modern, friendly classroom experience.",
+    "Transform any document into a competitive, real-time assessment in seconds. Built for the modern classroom.",
 };
 
 export default function RootLayout({

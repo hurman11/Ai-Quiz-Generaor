@@ -174,9 +174,9 @@ export default function TeacherDashboardPage() {
       {/* ── Top Navbar ── */}
       <header className="glass-nav sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 py-3">
         <div className="flex items-center gap-3">
-          <span className="text-xl">📝</span>
-          <span className="font-heading text-lg font-bold text-white">
-            QuizGen
+          <span className="text-xl animate-pulse">⚡</span>
+          <span className="font-bold text-white text-lg tracking-wider uppercase font-heading text-transparent bg-clip-text bg-[var(--gradient-brand)] drop-shadow-[0_0_10px_rgba(124,58,237,0.5)]">
+            Nexus
           </span>
           <span className="hidden sm:inline-block rounded-full bg-[rgba(0,212,255,0.15)] px-3 py-0.5 text-xs font-semibold text-[var(--accent-cyan)] border border-[var(--border-glow)]">
             Teacher Dashboard

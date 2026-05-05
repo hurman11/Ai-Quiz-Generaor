@@ -586,10 +586,10 @@ export default function StudentPage() {
       >
         <div className="p-6">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🎓</span>
+            <span className="text-2xl animate-pulse">⚡</span>
             <div>
-              <h1 className="text-xl font-bold text-text-primary">QuizGen</h1>
-              <p className="text-xs text-accent-green font-medium">Student Dashboard</p>
+              <h1 className="text-xl font-bold tracking-wider uppercase font-heading text-transparent bg-clip-text bg-[var(--gradient-brand)] drop-shadow-[0_0_10px_rgba(124,58,237,0.5)]">Nexus</h1>
+              <p className="text-xs text-accent-green font-medium mt-1">Student Dashboard</p>
             </div>
           </div>
         </div>
