@@ -104,6 +104,8 @@ async def complete_student(req: StudentRegister):
 async def check_student(name: str, pin: str):
     key = f"{name}-{pin}"
     status = registered_students.get(key)
+    if not status:
+        raise HTTPException(status_code=404, detail="Not registered")
     if status == "completed":
         raise HTTPException(status_code=403, detail="Access Denied")
     return {"success": True, "status": status}
