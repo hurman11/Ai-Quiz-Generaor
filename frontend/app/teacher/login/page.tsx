@@ -92,10 +92,11 @@ export default function TeacherLoginPage() {
         <button
           type="button"
           onClick={() => router.push("/")}
-          className="text-xs text-text-muted hover:text-white transition-colors mt-2 text-center"
+          className="text-xs text-[var(--text-muted)] hover:text-white transition-colors mt-2 text-center w-full"
         >
           ← Return to Home
         </button>
+        </div>
       </motion.div>
     </main>
   );
