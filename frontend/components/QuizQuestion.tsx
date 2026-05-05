@@ -1,16 +1,12 @@
-"use client";
-
 import { motion } from "framer-motion";
-import type { QuizQuestion as QuizQuestionType } from "@/types/quiz";
+import type { Question } from "@/types/quiz";
 
 interface QuizQuestionProps {
-  question: QuizQuestionType;
+  question: Question;
   onAnswer: (answer: string) => void;
   answered: boolean;
   selectedAnswer: string | null;
 }
-
-const optionKeys = ["A", "B", "C", "D"] as const;
 
 export default function QuizQuestion({
   question,
@@ -18,99 +14,75 @@ export default function QuizQuestion({
   answered,
   selectedAnswer,
 }: QuizQuestionProps) {
-  const getOptionStyle = (key: string): string => {
+  const getButtonClass = (optionLetter: string) => {
+    const isSelected = selectedAnswer === optionLetter;
+    const isCorrectOption = question.correct === optionLetter;
+
     if (!answered) {
-      return "border-white/40 bg-white/30 backdrop-blur-sm hover:border-accent-blue/50 hover:bg-white/50";
+      return "bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-body)] hover:border-[var(--accent-cyan)] hover:bg-[rgba(0,212,255,0.05)]";
     }
 
-    const isCorrect = key === question.correct;
-    const isSelected = key === selectedAnswer;
+    if (isCorrectOption) {
+      return "bg-[rgba(16,185,129,0.15)] border-[var(--accent-green)] text-[#6ee7b7]";
+    }
 
-    if (isCorrect) {
-      return "border-accent-green/50 bg-accent-green/15 backdrop-blur-sm";
+    if (isSelected && !isCorrectOption) {
+      return "bg-[rgba(239,68,68,0.15)] border-[var(--accent-red)] text-[#fca5a5]";
     }
-    if (isSelected && !isCorrect) {
-      return "border-accent-red/50 bg-accent-red/15 backdrop-blur-sm animate-shake";
-    }
-    return "border-white/20 bg-white/10 opacity-50";
+
+    return "bg-[var(--bg-elevated)] border-[var(--border)] text-[var(--text-muted)] opacity-50";
   };
 
-  const getLetterStyle = (key: string): string => {
-    if (!answered) return "border-white/30 bg-white/40 text-text-secondary";
-
-    const isCorrect = key === question.correct;
-    const isSelected = key === selectedAnswer;
-
-    if (isCorrect) return "border-accent-green/40 bg-accent-green/20 text-accent-green";
-    if (isSelected && !isCorrect) return "border-accent-red/40 bg-accent-red/20 text-accent-red";
-    return "border-white/20 bg-white/20 text-text-secondary/40";
+  const shakeAnimation = {
+    x: [0, -4, 4, -4, 4, 0],
+    transition: { duration: 0.4 },
   };
 
   return (
-    <div className="edu-card">
-      {/* ── Question Badge ── */}
-      <span className="mb-4 inline-block rounded-full bg-accent-teal/10 px-3 py-1 text-xs font-semibold text-accent-teal">
-        Question {question.id}
-      </span>
-
+    <div className="edu-card flex flex-col gap-6 w-full" style={{ padding: "clamp(20px, 3vw, 28px)" }}>
       {/* ── Question Text ── */}
-      <p className="mb-6 text-base font-medium leading-relaxed text-text-primary sm:text-lg">
+      <h2 className="font-heading font-semibold text-white leading-relaxed" style={{ fontSize: "clamp(0.95rem, 3vw, 1.1rem)" }}>
         {question.question}
-      </p>
+      </h2>
 
       {/* ── Options ── */}
       <div className="flex flex-col gap-3">
-        {optionKeys.map((key, index) => (
-          <motion.button
-            key={key}
-            type="button"
-            onClick={() => !answered && onAnswer(key)}
-            disabled={answered}
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05, duration: 0.25 }}
-            className={`flex min-h-[48px] items-center gap-3 rounded-btn border px-4 py-3 text-left transition-all duration-200 ${getOptionStyle(key)} ${
-              answered ? "cursor-default" : "cursor-pointer"
-            }`}
-          >
-            <span
-              className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border text-sm font-semibold ${getLetterStyle(key)}`}
-            >
-              {key}
-            </span>
-            <span className="text-sm text-text-primary">
-              {question.options[key as keyof typeof question.options]}
-            </span>
+        {Object.entries(question.options).map(([letter, text]) => {
+          const isSelected = selectedAnswer === letter;
+          const isCorrectOption = question.correct === letter;
+          const isWrongSelection = answered && isSelected && !isCorrectOption;
 
-            {/* ── Correct/Wrong Labels ── */}
-            {answered && key === question.correct && (
-              <span className="ml-auto text-xs font-semibold text-accent-green">
-                ✓ Correct
-              </span>
-            )}
-            {answered &&
-              key === selectedAnswer &&
-              key !== question.correct && (
-                <span className="ml-auto text-xs font-semibold text-accent-red">
-                  ✗ Wrong
-                </span>
-              )}
-          </motion.button>
-        ))}
+          return (
+            <motion.button
+              key={letter}
+              onClick={() => onAnswer(letter)}
+              disabled={answered}
+              animate={isWrongSelection ? shakeAnimation : {}}
+              className={`flex items-start sm:items-center w-full text-left rounded-xl border p-[14px_16px] transition-all duration-200 min-h-[52px] ${getButtonClass(
+                letter
+              )}`}
+            >
+              <div className="flex items-center justify-center rounded-lg bg-black/20 text-sm font-bold min-w-[32px] h-[32px] flex-shrink-0 mr-3 border border-white/5">
+                {letter}
+              </div>
+              <span className="flex-1 mt-1 sm:mt-0 leading-snug">{text}</span>
+            </motion.button>
+          );
+        })}
       </div>
 
-      {/* ── Explanation ── */}
+      {/* ── Explanation (shows only after answering) ── */}
       {answered && (
         <motion.div
-          className="mt-5 rounded-lg border-l-4 border-accent-amber bg-accent-amber/5 p-4"
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          transition={{ duration: 0.3 }}
+          className="mt-2 overflow-hidden rounded-r-lg border-l-4 border-[var(--accent-purple)] bg-[rgba(124,58,237,0.1)]"
         >
-          <p className="text-sm text-text-primary/80">
-            <strong className="text-accent-amber">Explanation:</strong>{" "}
+          <div className="p-4 text-[0.8rem] sm:text-sm text-[var(--text-secondary)]">
+            <strong className="block mb-1 text-[var(--accent-purple)]">Explanation:</strong>
             {question.explanation}
-          </p>
+          </div>
         </motion.div>
       )}
     </div>

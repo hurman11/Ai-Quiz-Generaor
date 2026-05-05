@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
+import ParticleBackground from "@/components/ParticleBackground";
 import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -30,9 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${plusJakartaSans.variable} ${inter.variable}`}>
       <body className="min-h-screen bg-bg-base text-text-primary antialiased font-body">
-        {/* Glassmorphism gradient blobs */}
-        <div className="blob-bg" aria-hidden="true" />
-        <div className="blob-accent" aria-hidden="true" />
+        <ParticleBackground />
         <div className="relative z-10">
           {children}
         </div>

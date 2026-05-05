@@ -24,82 +24,96 @@ export default function HomePage() {
   const router = useRouter();
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
-      <motion.div
-        className="flex w-full max-w-3xl flex-col items-center gap-10"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* ── Logo & Title ── */}
-        <motion.div className="text-center" variants={itemVariants}>
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-navy text-accent-lime text-2xl shadow-md">
-            📝
-          </div>
-          <h1 className="font-heading text-4xl font-extrabold text-text-primary sm:text-5xl">
-            QuizGen
-          </h1>
-          <p className="mt-2 text-base text-text-secondary">
-            AI-powered quiz generator for classrooms
-          </p>
-        </motion.div>
+    <div className="flex min-h-screen flex-col" style={{ background: "var(--gradient-hero)" }}>
+      {/* ── Navbar ── */}
+      <nav className="flex items-center justify-between px-4 sm:px-8 py-4 glass-nav z-10 w-full" style={{ background: "var(--bg-navbar)" }}>
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">📝</span>
+          <span className="font-bold text-white text-lg sm:text-xl">QuizGen</span>
+        </div>
+        <button
+          onClick={() => router.push("/teacher/login")}
+          className="btn-outline text-sm sm:text-base py-2 px-4 min-h-[40px] sm:min-h-[48px]"
+        >
+          Teacher Login
+        </button>
+      </nav>
 
-        {/* ── Role Selection Cards ── */}
+      {/* ── Main Content ── */}
+      <main className="flex flex-1 flex-col items-center justify-center page-container z-10">
         <motion.div
-          className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2"
-          variants={itemVariants}
+          className="flex w-full max-w-4xl flex-col items-center gap-12"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
         >
-          {/* Teacher Card */}
-          <button
-            id="role-teacher-btn"
-            onClick={() => router.push("/teacher/login")}
-            className="edu-card group flex flex-col items-center gap-4 p-8 text-center cursor-pointer hover:border-accent-purple transition-all duration-300"
-          >
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-accent-purple/10 text-4xl transition-transform duration-300 group-hover:scale-110">
-              👩‍🏫
-            </div>
-            <h2 className="font-heading text-xl font-bold text-accent-purple">
-              I&apos;m a Teacher
-            </h2>
-            <p className="text-sm text-text-secondary">
-              Create quizzes, share with students, and track their results in
-              real time.
+          {/* ── Hero Text ── */}
+          <motion.div className="text-center max-w-2xl" variants={itemVariants}>
+            <h1 className="font-heading font-extrabold text-white leading-tight" style={{ fontSize: "clamp(1.6rem, 5vw, 2.8rem)" }}>
+              The Future of Interactive Learning
+            </h1>
+            <p className="mt-4 text-text-secondary" style={{ fontSize: "clamp(0.875rem, 3vw, 1rem)" }}>
+              Generate highly-accurate, AI-powered quizzes instantly. Perfect for educators who want to save time and students who want to test their knowledge.
             </p>
-            <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-accent-purple/10 px-4 py-1.5 text-sm font-semibold text-accent-purple transition-colors group-hover:bg-accent-purple group-hover:text-white">
-              Get Started →
-            </span>
-          </button>
+          </motion.div>
 
-          {/* Student Card */}
-          <button
-            id="role-student-btn"
-            onClick={() => router.push("/student")}
-            className="edu-card group flex flex-col items-center gap-4 p-8 text-center cursor-pointer hover:border-accent-teal transition-all duration-300"
+          {/* ── Role Selection Cards ── */}
+          <motion.div
+            className="flex flex-col sm:flex-row w-full gap-6 justify-center items-stretch"
+            variants={itemVariants}
           >
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-accent-teal/10 text-4xl transition-transform duration-300 group-hover:scale-110">
-              🎓
+            {/* Teacher Card */}
+            <div className="edu-card flex flex-1 flex-col items-center justify-between text-center group cursor-default" style={{ padding: "clamp(20px, 3vw, 28px)" }}>
+              <div className="flex flex-col items-center gap-4 mb-6">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(124,58,237,0.15)] text-3xl">
+                  👩‍🏫
+                </div>
+                <h2 className="font-heading text-xl font-bold text-white">
+                  Teacher Access
+                </h2>
+                <p className="text-sm text-text-secondary">
+                  Create AI quizzes from any material, assign them to your class, and track real-time results.
+                </p>
+              </div>
+              <button
+                onClick={() => router.push("/teacher/login")}
+                className="w-full btn-primary"
+              >
+                Create a Quiz
+              </button>
             </div>
-            <h2 className="font-heading text-xl font-bold text-text-primary">
-              I&apos;m a Student
-            </h2>
-            <p className="text-sm text-text-secondary">
-              Take quizzes assigned by your teacher and see your score
-              instantly.
-            </p>
-            <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-accent-teal/10 px-4 py-1.5 text-sm font-semibold text-accent-teal transition-colors group-hover:bg-accent-teal group-hover:text-white">
-              Join Quiz →
-            </span>
-          </button>
+
+            {/* Student Card */}
+            <div className="edu-card flex flex-1 flex-col items-center justify-between text-center group cursor-default" style={{ padding: "clamp(20px, 3vw, 28px)" }}>
+              <div className="flex flex-col items-center gap-4 mb-6">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(0,212,255,0.15)] text-3xl">
+                  🎓
+                </div>
+                <h2 className="font-heading text-xl font-bold text-white">
+                  Student Portal
+                </h2>
+                <p className="text-sm text-text-secondary">
+                  Join an active quiz session assigned by your teacher and test your knowledge.
+                </p>
+              </div>
+              <button
+                onClick={() => router.push("/student")}
+                className="w-full btn-outline"
+              >
+                Join Session
+              </button>
+            </div>
+          </motion.div>
+
+          {/* ── Footer ── */}
+          <motion.p
+            className="text-xs text-text-muted mt-8"
+            variants={itemVariants}
+          >
+            Powered by Groq AI &nbsp;·&nbsp; Built for the future of education
+          </motion.p>
         </motion.div>
-
-        {/* ── Footer ── */}
-        <motion.p
-          className="text-xs text-text-secondary/60"
-          variants={itemVariants}
-        >
-          Powered by Groq AI &nbsp;·&nbsp; Built for educators
-        </motion.p>
-      </motion.div>
-    </main>
+      </main>
+    </div>
   );
 }

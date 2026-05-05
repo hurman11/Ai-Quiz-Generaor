@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import QuizForm from "@/components/QuizForm";
 import type { Quiz } from "@/types/quiz";
+import * as XLSX from "xlsx";
 
 interface StudentResult {
   student_name: string;
@@ -13,12 +14,17 @@ interface StudentResult {
   timestamp: string;
 }
 
+interface ResultsResponse {
+  results: StudentResult[];
+  registered_count: number;
+}
+
 type TabKey = "generate" | "active" | "results";
 
 const tabs: { key: TabKey; label: string; icon: string }[] = [
   { key: "generate", label: "Generate Quiz", icon: "✨" },
-  { key: "active", label: "Active Quiz", icon: "📋" },
-  { key: "results", label: "Student Results", icon: "📊" },
+  { key: "active", label: "Active", icon: "📋" },
+  { key: "results", label: "Results", icon: "📊" },
 ];
 
 export default function TeacherDashboardPage() {
@@ -26,6 +32,7 @@ export default function TeacherDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("generate");
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
   const [results, setResults] = useState<StudentResult[]>([]);
+  const [registeredCount, setRegisteredCount] = useState<number>(0);
   const [copied, setCopied] = useState(false);
 
   // Auth guard
@@ -53,8 +60,9 @@ export default function TeacherDashboardPage() {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const res = await fetch(`${API_URL}/results`);
       if (res.ok) {
-        const data: StudentResult[] = await res.json();
-        setResults(data);
+        const data: ResultsResponse = await res.json();
+        setResults(data.results || []);
+        setRegisteredCount(data.registered_count || 0);
       }
     } catch {
       /* silent */
@@ -77,6 +85,8 @@ export default function TeacherDashboardPage() {
   const handleClearQuiz = async () => {
     localStorage.removeItem("active_quiz");
     setActiveQuiz(null);
+    setResults([]);
+    setRegisteredCount(0);
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     try {
       await fetch(`${API_URL}/active-quiz`, { method: "DELETE" });
@@ -102,69 +112,101 @@ export default function TeacherDashboardPage() {
         ).toFixed(1)
       : "0";
 
+  const completionRate =
+    registeredCount > 0
+      ? ((results.length / registeredCount) * 100).toFixed(0)
+      : "0";
+
+  const exportToExcel = () => {
+    if (results.length === 0) return;
+
+    const exportData = results.map((r, idx) => {
+      const pct = ((r.score / r.total) * 100).toFixed(1);
+      return {
+        "#": idx + 1,
+        "Student Name": r.student_name,
+        "Score": r.score,
+        "Total": r.total,
+        "Percentage (%)": Number(pct),
+        "Status": "Completed",
+        "Submitted At": new Date(r.timestamp).toLocaleString(),
+      };
+    });
+
+    const summaryData = [
+      { "#": "", "Student Name": "Total Students:", "Score": results.length, "Total": "", "Percentage (%)": "", "Status": "", "Submitted At": "" },
+      { "#": "", "Student Name": "Average Score:", "Score": "", "Total": "", "Percentage (%)": Number(averageScore), "Status": "", "Submitted At": "" },
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet([...exportData, {}, ...summaryData]);
+    
+    // Auto-size columns
+    const colWidths = [
+      { wch: 5 },  // #
+      { wch: 25 }, // Name
+      { wch: 10 }, // Score
+      { wch: 10 }, // Total
+      { wch: 15 }, // %
+      { wch: 15 }, // Status
+      { wch: 25 }, // Time
+    ];
+    worksheet["!cols"] = colWidths;
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Results");
+
+    const dateStr = new Date().toISOString().split("T")[0];
+    XLSX.writeFile(workbook, `QuizResults_${dateStr}.xlsx`);
+  };
+
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col pb-[64px] md:pb-0">
       {/* ── Top Navbar ── */}
-      <header className="glass-nav sticky top-0 z-50 flex items-center justify-between px-6 py-3">
+      <header className="glass-nav sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 py-3">
         <div className="flex items-center gap-3">
           <span className="text-xl">📝</span>
-          <span className="font-heading text-lg font-bold text-text-primary">
+          <span className="font-heading text-lg font-bold text-white">
             QuizGen
           </span>
-          <span className="hidden sm:inline-block rounded-full bg-accent-purple/10 px-3 py-0.5 text-xs font-semibold text-accent-purple">
+          <span className="hidden sm:inline-block rounded-full bg-[rgba(0,212,255,0.15)] px-3 py-0.5 text-xs font-semibold text-[var(--accent-cyan)] border border-[var(--border-glow)]">
             Teacher Dashboard
           </span>
         </div>
         <button
           id="logout-btn"
           onClick={handleLogout}
-          className="btn-outline px-4 py-2 text-sm"
+          className="btn-outline px-4 py-2 text-sm min-h-[40px]"
         >
           Logout
         </button>
       </header>
 
-      <div className="flex flex-1">
-        {/* ── Sidebar ── */}
-        <aside className="glass-sidebar hidden w-64 flex-shrink-0 p-4 md:block">
-          <nav className="flex flex-col gap-1 mt-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium transition-all duration-200 ${
-                  activeTab === tab.key
-                    ? "bg-white/15 text-white"
-                    : "text-white/60 hover:bg-white/10 hover:text-white/90"
-                }`}
-              >
-                <span className="text-lg">{tab.icon}</span>
-                {tab.label}
-              </button>
-            ))}
+      <div className="flex flex-1 relative">
+        {/* ── Desktop Sidebar ── */}
+        <aside className="glass-sidebar hidden w-64 flex-shrink-0 p-4 md:block sticky top-[65px] h-[calc(100vh-65px)] overflow-y-auto">
+          <nav className="flex flex-col gap-2 mt-2">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? "border-l-[3px] border-[var(--accent-cyan)] bg-[rgba(0,212,255,0.08)] text-white"
+                      : "border-l-[3px] border-transparent text-[var(--text-sidebar)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--text-body)]"
+                  }`}
+                >
+                  <span className="text-lg">{tab.icon}</span>
+                  {tab.label}
+                </button>
+              );
+            })}
           </nav>
         </aside>
 
-        {/* ── Mobile Tab Bar ── */}
-        <div className="flex w-full border-b border-border bg-white/50 backdrop-blur-lg md:hidden">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 py-3 text-center text-xs font-semibold transition-colors ${
-                activeTab === tab.key
-                  ? "border-b-2 border-accent-teal text-accent-teal"
-                  : "text-text-secondary"
-              }`}
-            >
-              <span className="block text-lg">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
         {/* ── Main Content ── */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+        <main className="flex-1 w-full overflow-y-auto page-container">
           <AnimatePresence mode="wait">
             {/* ─── Generate Quiz Tab ─── */}
             {activeTab === "generate" && (
@@ -176,7 +218,7 @@ export default function TeacherDashboardPage() {
                 transition={{ duration: 0.3 }}
                 className="mx-auto max-w-2xl"
               >
-                <h2 className="mb-6 font-heading text-2xl font-bold text-text-primary">
+                <h2 className="mb-6 font-heading text-2xl font-bold text-white">
                   Generate a New Quiz
                 </h2>
                 <div className="edu-card">
@@ -195,38 +237,42 @@ export default function TeacherDashboardPage() {
                 transition={{ duration: 0.3 }}
                 className="mx-auto max-w-2xl"
               >
-                <h2 className="mb-6 font-heading text-2xl font-bold text-text-primary">
+                <h2 className="mb-6 font-heading text-2xl font-bold text-white">
                   Active Quiz
                 </h2>
 
                 {activeQuiz ? (
-                  <div className="edu-card flex flex-col gap-5">
-                    <div className="flex items-start justify-between gap-4">
+                  <div className="edu-card flex flex-col gap-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                       <div>
-                        <h3 className="font-heading text-lg font-bold text-text-primary">
+                        <h3 className="font-heading text-xl font-bold text-white">
                           {activeQuiz.title}
                         </h3>
-                        <p className="mt-1 text-sm text-text-secondary">
+                        <p className="mt-1 text-sm text-[var(--text-secondary)]">
                           {activeQuiz.questions.length} questions
                         </p>
                       </div>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-accent-green/10 px-3 py-1 text-xs font-semibold text-accent-green">
-                        ● Live
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="relative flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-cyan)] opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--accent-cyan)] shadow-[0_0_8px_var(--accent-cyan)]"></span>
+                        </span>
+                        <span className="text-xs font-semibold text-[var(--accent-cyan)]">LIVE</span>
+                      </div>
                     </div>
 
                     {/* Shareable Link */}
-                    <div className="rounded-lg border border-border bg-bg-base p-4">
-                      <p className="mb-2 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
+                      <p className="mb-2 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                         Student Link
                       </p>
-                      <div className="flex items-center gap-2">
-                        <code className="flex-1 rounded-md bg-bg-card border border-border px-3 py-2 text-sm text-text-primary">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <code className="flex-1 rounded-md bg-[var(--bg-navbar)] border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-body)] break-all">
                           {studentLink}
                         </code>
                         <button
                           onClick={handleCopyLink}
-                          className="btn-primary px-4 py-2 text-sm"
+                          className="btn-outline px-4 py-2 text-sm sm:w-auto"
                         >
                           {copied ? "Copied!" : "Copy"}
                         </button>
@@ -235,20 +281,20 @@ export default function TeacherDashboardPage() {
 
                     <button
                       onClick={handleClearQuiz}
-                      className="btn-danger self-start"
+                      className="btn-danger w-full sm:w-auto self-start mt-2"
                     >
                       Clear Active Quiz
                     </button>
                   </div>
                 ) : (
-                  <div className="edu-card flex flex-col items-center gap-4 py-12 text-center">
-                    <span className="text-5xl">📭</span>
-                    <p className="text-text-secondary">
+                  <div className="edu-card flex flex-col items-center gap-4 py-12 text-center border-dashed">
+                    <span className="text-5xl opacity-80">📭</span>
+                    <p className="text-[var(--text-secondary)]">
                       No quiz is currently active
                     </p>
                     <button
                       onClick={() => setActiveTab("generate")}
-                      className="btn-primary"
+                      className="btn-primary mt-2"
                     >
                       Generate a Quiz
                     </button>
@@ -265,93 +311,94 @@ export default function TeacherDashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.3 }}
-                className="mx-auto max-w-3xl"
+                className="mx-auto max-w-4xl"
               >
-                <h2 className="mb-6 font-heading text-2xl font-bold text-text-primary">
-                  Student Results
-                </h2>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                  <h2 className="font-heading text-2xl font-bold text-white">
+                    Student Results
+                  </h2>
+                  <button
+                    onClick={exportToExcel}
+                    disabled={results.length === 0}
+                    className="btn-outline border-[var(--accent-green)] text-[var(--accent-green)] hover:bg-[rgba(16,185,129,0.1)] hover:border-[var(--accent-green)] hover:text-[#6ee7b7] disabled:opacity-50 disabled:border-[var(--border)] disabled:text-[var(--text-secondary)] w-full sm:w-auto"
+                  >
+                    ⬇ Export to Excel
+                  </button>
+                </div>
 
                 {/* Summary Bar */}
-                {results.length > 0 && (
-                  <div className="mb-6 grid grid-cols-2 gap-4">
-                    <div className="edu-card flex flex-col items-center p-4">
-                      <span className="text-3xl font-bold text-accent-teal">
-                        {results.length}
-                      </span>
-                      <span className="text-xs text-text-secondary">
-                        Total Attempts
-                      </span>
-                    </div>
-                    <div className="edu-card flex flex-col items-center p-4">
-                      <span className="text-3xl font-bold text-accent-green">
-                        {averageScore}%
-                      </span>
-                      <span className="text-xs text-text-secondary">
-                        Average Score
-                      </span>
-                    </div>
+                <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="edu-card p-4 flex flex-col items-center justify-center text-center">
+                    <span className="text-3xl font-bold text-white">{registeredCount}</span>
+                    <span className="text-xs text-[var(--text-secondary)] mt-1 uppercase tracking-wider font-semibold">Registered Students</span>
                   </div>
-                )}
+                  <div className="edu-card p-4 flex flex-col items-center justify-center text-center">
+                    <span className="text-3xl font-bold text-[var(--accent-cyan)]">{results.length}</span>
+                    <span className="text-xs text-[var(--text-secondary)] mt-1 uppercase tracking-wider font-semibold">Total Attempts</span>
+                  </div>
+                  <div className="edu-card p-4 flex flex-col items-center justify-center text-center">
+                    <span className="text-3xl font-bold text-[var(--accent-green)]">{averageScore}%</span>
+                    <span className="text-xs text-[var(--text-secondary)] mt-1 uppercase tracking-wider font-semibold">Average Score</span>
+                  </div>
+                  <div className="edu-card p-4 flex flex-col items-center justify-center text-center">
+                    <span className="text-3xl font-bold text-[var(--accent-purple)]">{completionRate}%</span>
+                    <span className="text-xs text-[var(--text-secondary)] mt-1 uppercase tracking-wider font-semibold">Completion Rate</span>
+                  </div>
+                </div>
 
                 {results.length > 0 ? (
                   <div className="edu-card overflow-hidden p-0">
-                    <table className="w-full text-left text-sm">
-                      <thead>
-                        <tr className="border-b border-border/50 bg-white/30">
-                          <th className="px-5 py-3 font-semibold text-text-secondary">
-                            Student
-                          </th>
-                          <th className="px-5 py-3 font-semibold text-text-secondary">
-                            Score
-                          </th>
-                          <th className="px-5 py-3 font-semibold text-text-secondary">
-                            Percentage
-                          </th>
-                          <th className="hidden px-5 py-3 font-semibold text-text-secondary sm:table-cell">
-                            Submitted
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {results.map((r, idx) => {
-                          const pct = ((r.score / r.total) * 100).toFixed(0);
-                          return (
-                            <tr
-                              key={idx}
-                              className="border-b border-border last:border-0 hover:bg-bg-base/60 transition-colors"
-                            >
-                              <td className="px-5 py-3 font-medium text-text-primary">
-                                {r.student_name}
-                              </td>
-                              <td className="px-5 py-3 text-text-secondary">
-                                {r.score}/{r.total}
-                              </td>
-                              <td className="px-5 py-3">
-                                <span
-                                  className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                                    Number(pct) >= 70
-                                      ? "bg-accent-green/10 text-accent-green"
-                                      : Number(pct) >= 50
-                                      ? "bg-accent-amber/10 text-accent-amber"
-                                      : "bg-accent-red/10 text-accent-red"
-                                  }`}
-                                >
-                                  {pct}%
-                                </span>
-                              </td>
-                              <td className="hidden px-5 py-3 text-text-secondary sm:table-cell">
-                                {new Date(r.timestamp).toLocaleString()}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm whitespace-nowrap">
+                        <thead>
+                          <tr className="border-b border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text-secondary)] uppercase text-xs tracking-wider">
+                            <th className="px-5 py-4 font-semibold">Student</th>
+                            <th className="px-5 py-4 font-semibold text-center sm:text-left">Score</th>
+                            <th className="px-5 py-4 font-semibold text-center sm:text-left">Percentage</th>
+                            <th className="hidden sm:table-cell px-5 py-4 font-semibold">Submitted</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {results.map((r, idx) => {
+                            const pct = ((r.score / r.total) * 100).toFixed(0);
+                            return (
+                              <tr
+                                key={idx}
+                                className="border-b border-[var(--border-subtle)] last:border-0 hover:bg-[var(--bg-elevated)] transition-colors"
+                              >
+                                <td className="px-5 py-4 font-medium text-[var(--text-body)]">
+                                  {r.student_name}
+                                </td>
+                                <td className="px-5 py-4 text-[var(--text-secondary)] text-center sm:text-left">
+                                  {r.score}/{r.total}
+                                </td>
+                                <td className="px-5 py-4 text-center sm:text-left">
+                                  <span
+                                    className={`inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
+                                      Number(pct) >= 70
+                                        ? "bg-[rgba(16,185,129,0.1)] text-[#6ee7b7] border-[var(--accent-green)]"
+                                        : Number(pct) >= 50
+                                        ? "bg-[rgba(245,158,11,0.1)] text-[#fcd34d] border-[var(--accent-amber)]"
+                                        : "bg-[rgba(239,68,68,0.1)] text-[#fca5a5] border-[var(--accent-red)]"
+                                    }`}
+                                  >
+                                    {pct}%
+                                  </span>
+                                </td>
+                                <td className="hidden sm:table-cell px-5 py-4 text-[var(--text-muted)] text-xs">
+                                  {new Date(r.timestamp).toLocaleString()}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 ) : (
-                  <div className="edu-card flex flex-col items-center gap-4 py-12 text-center">
-                    <span className="text-5xl">⏳</span>
-                    <p className="text-text-secondary">
+                  <div className="edu-card flex flex-col items-center gap-4 py-12 text-center border-dashed">
+                    <span className="text-5xl opacity-80">⏳</span>
+                    <p className="text-[var(--text-secondary)]">
                       Waiting for students to complete the quiz...
                     </p>
                   </div>
@@ -360,6 +407,24 @@ export default function TeacherDashboardPage() {
             )}
           </AnimatePresence>
         </main>
+      </div>
+
+      {/* ── Mobile Bottom Tab Bar ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] pb-[env(safe-area-inset-bottom)] border-t border-[var(--border)] bg-[var(--bg-navbar)] md:hidden">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex flex-1 flex-col items-center justify-center gap-1 transition-colors ${
+              activeTab === tab.key
+                ? "text-[var(--accent-cyan)]"
+                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+            }`}
+          >
+            <span className="text-xl leading-none">{tab.icon}</span>
+            <span className="text-[0.65rem] font-semibold uppercase tracking-wide">{tab.label}</span>
+          </button>
+        ))}
       </div>
     </div>
   );

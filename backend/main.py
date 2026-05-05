@@ -43,6 +43,7 @@ SYSTEM_PROMPT = """You are a quiz generator. Respond ONLY with valid JSON matchi
 # In-memory storage
 results: list = []
 active_quiz_data: dict | None = None
+registered_students: dict = {}
 
 @app.get("/active-quiz")
 async def get_active_quiz():
@@ -58,16 +59,16 @@ async def set_active_quiz(quiz: dict):
 
 @app.delete("/active-quiz")
 async def clear_active_quiz():
-    global active_quiz_data
+    global active_quiz_data, registered_students, results
     active_quiz_data = None
+    registered_students.clear()
+    results.clear()
     return {"success": True}
-
 
 class QuizRequest(BaseModel):
     material: str = Field(..., min_length=1, description="Subject name or pasted study text")
     num_questions: int = Field(default=10, ge=5, le=20, description="Number of questions")
     difficulty: str = Field(default="medium", pattern="^(easy|medium|hard)$", description="Difficulty level")
-
 
 class ResultSubmission(BaseModel):
     student_name: str = Field(..., min_length=1)
@@ -75,11 +76,39 @@ class ResultSubmission(BaseModel):
     total: int = Field(..., ge=1)
     timestamp: str = Field(..., min_length=1)
 
+class StudentRegister(BaseModel):
+    name: str = Field(..., min_length=1)
+    pin: str = Field(..., min_length=4, max_length=4)
+
+@app.post("/student/register")
+async def register_student(req: StudentRegister):
+    key = f"{req.name}-{req.pin}"
+    if key in registered_students:
+        if registered_students[key] == "completed":
+            raise HTTPException(status_code=403, detail="Access Denied: Quiz already completed")
+        # if already registered but not completed, allow resuming
+        return {"success": True, "status": "registered"}
+    
+    registered_students[key] = "registered"
+    return {"success": True, "status": "new"}
+
+@app.post("/student/complete")
+async def complete_student(req: StudentRegister):
+    key = f"{req.name}-{req.pin}"
+    registered_students[key] = "completed"
+    return {"success": True}
+
+@app.get("/student/check")
+async def check_student(name: str, pin: str):
+    key = f"{name}-{pin}"
+    status = registered_students.get(key)
+    if status == "completed":
+        raise HTTPException(status_code=403, detail="Access Denied")
+    return {"success": True, "status": status}
 
 @app.get("/health")
 async def health_check():
     return {"status": "online", "model": MODEL}
-
 
 @app.post("/generate-quiz")
 async def generate_quiz(request: QuizRequest):
@@ -103,7 +132,6 @@ async def generate_quiz(request: QuizRequest):
 
         content = response.choices[0].message.content
 
-        # Strip markdown fences if present
         content = content.strip()
         if content.startswith("```json"):
             content = content[7:]
@@ -127,7 +155,6 @@ async def generate_quiz(request: QuizRequest):
             detail=f"Groq API error: {str(exc)}",
         )
 
-
 @app.post("/submit-result")
 async def submit_result(submission: ResultSubmission):
     results.append({
@@ -138,10 +165,9 @@ async def submit_result(submission: ResultSubmission):
     })
     return {"success": True}
 
-
 @app.get("/results")
 async def get_results():
-    return results
+    return {"results": results, "registered_count": len(registered_students)}
 
 
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".txt"}

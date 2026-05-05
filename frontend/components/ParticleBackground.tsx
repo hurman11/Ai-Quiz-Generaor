@@ -1,14 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
-
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  radius: number;
-}
+import React, { useEffect, useRef } from "react";
 
 export default function ParticleBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -20,43 +12,70 @@ export default function ParticleBackground() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let animationId: number;
+    let animationFrameId: number;
     let particles: Particle[] = [];
 
-    const resize = () => {
+    const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      initParticles();
     };
 
-    const createParticles = () => {
-      const count = 90;
+    class Particle {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      radius: number;
+
+      constructor() {
+        this.x = Math.random() * canvas!.width;
+        this.y = Math.random() * canvas!.height;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.radius = 1.5;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < 0 || this.x > canvas!.width) this.vx = -this.vx;
+        if (this.y < 0 || this.y > canvas!.height) this.vy = -this.vy;
+      }
+
+      draw(ctx: CanvasRenderingContext2D) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0, 212, 255, 0.25)";
+        ctx.fill();
+      }
+    }
+
+    const initParticles = () => {
       particles = [];
-      for (let i = 0; i < count; i++) {
-        particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.4,
-          vy: (Math.random() - 0.5) * 0.4,
-          radius: 1.5,
-        });
+      const particleCount = 80;
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
       }
     };
 
-    const draw = () => {
+    const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw lines between nearby particles
       for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw(ctx);
+
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < 130) {
-            const opacity = (1 - dist / 130) * 0.15;
+          if (dist < 120) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(0, 245, 255, ${opacity})`;
-            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = `rgba(124, 58, 237, ${0.12 * (1 - dist / 120)})`;
+            ctx.lineWidth = 1;
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
             ctx.stroke();
@@ -64,51 +83,31 @@ export default function ParticleBackground() {
         }
       }
 
-      // Draw particles
-      for (const p of particles) {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(0, 245, 255, 0.35)";
-        ctx.fill();
-      }
+      animationFrameId = requestAnimationFrame(animate);
     };
 
-    const update = () => {
-      for (const p of particles) {
-        p.x += p.vx;
-        p.y += p.vy;
-
-        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
-        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
-      }
-    };
-
-    const loop = () => {
-      update();
-      draw();
-      animationId = requestAnimationFrame(loop);
-    };
-
-    resize();
-    createParticles();
-    loop();
-
-    window.addEventListener("resize", () => {
-      resize();
-      createParticles();
-    });
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+    animate();
 
     return () => {
-      cancelAnimationFrame(animationId);
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", resizeCanvas);
+      cancelAnimationFrame(animationFrameId);
     };
   }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none fixed inset-0 z-0"
-      aria-hidden="true"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        zIndex: 0,
+        pointerEvents: "none",
+      }}
     />
   );
 }

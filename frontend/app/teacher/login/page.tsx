@@ -6,109 +6,83 @@ import { motion } from "framer-motion";
 
 export default function TeacherLoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === "teacher" && password === "admin123") {
+    if (password === "admin123") {
       localStorage.setItem("teacher_auth", "true");
       router.push("/teacher/dashboard");
     } else {
-      setError("Incorrect credentials");
+      setError(true);
+      setTimeout(() => setError(false), 3000);
     }
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-12">
+    <main className="flex min-h-screen items-center justify-center p-4">
       <motion.div
-        className="w-full max-w-md"
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        className="edu-card-solid flex flex-col gap-6"
+        style={{ width: "calc(100% - 32px)", maxWidth: "420px", margin: "0 auto", padding: "clamp(24px, 5vw, 36px)" }}
       >
-        <div className="edu-card">
-          {/* Header */}
-          <div className="mb-6 flex flex-col items-center gap-3">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-purple/10 text-2xl">
-              🔒
-            </div>
-            <h1 className="font-heading text-2xl font-bold text-text-primary">
-              Teacher Login
-            </h1>
-            <p className="text-sm text-text-secondary">
-              Sign in to manage your quizzes
-            </p>
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold tracking-widest mb-6" style={{ background: "rgba(0,212,255,0.15)", color: "var(--accent-cyan)", borderColor: "var(--border-glow)" }}>
+            <span className="h-2 w-2 rounded-full bg-accent-cyan shadow-[0_0_8px_var(--accent-cyan)]"></span>
+            TEACHER ACCESS
           </div>
-
-          {/* Form */}
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                Username
-              </label>
-              <input
-                id="teacher-username"
-                type="text"
-                value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                  setError("");
-                }}
-                placeholder="Enter your username"
-                className="edu-input"
-                autoComplete="username"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-text-primary">
-                Password
-              </label>
-              <input
-                id="teacher-password"
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError("");
-                }}
-                placeholder="Enter your password"
-                className="edu-input"
-                autoComplete="current-password"
-              />
-            </div>
-
-            {error && (
-              <motion.div
-                className="error-banner"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                {error}
-              </motion.div>
-            )}
-
-            <button
-              id="teacher-login-btn"
-              type="submit"
-              className="btn-primary mt-2 w-full py-3"
-            >
-              Sign In
-            </button>
-          </form>
-
-          {/* Back Link */}
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => router.push("/")}
-              className="text-sm text-text-secondary hover:text-accent-teal transition-colors"
-            >
-              ← Back to role selection
-            </button>
-          </div>
+          <h1 className="font-heading text-2xl font-bold text-white">
+            Authentication Required
+          </h1>
+          <p className="mt-2 text-sm text-text-secondary">
+            Please enter your admin credentials to access the dashboard.
+          </p>
         </div>
+
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-text-secondary">
+              Access Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="edu-input w-full"
+              style={{ minHeight: "48px" }}
+              required
+            />
+          </div>
+
+          {error && (
+            <motion.p
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="error-banner text-center"
+            >
+              Invalid password. Try "admin123".
+            </motion.p>
+          )}
+
+          <button
+            type="submit"
+            className="btn-primary w-full mt-2"
+            style={{ minHeight: "48px" }}
+          >
+            Authenticate
+          </button>
+        </form>
+        
+        <button
+          type="button"
+          onClick={() => router.push("/")}
+          className="text-xs text-text-muted hover:text-white transition-colors mt-2 text-center"
+        >
+          ← Return to Home
+        </button>
       </motion.div>
     </main>
   );
