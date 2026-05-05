@@ -7,5 +7,5 @@ python-multipart
 PyPDF2
 python-docx
 psycopg2-binary
-passlib[bcrypt]
+bcrypt
 pyjwt
