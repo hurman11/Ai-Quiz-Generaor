@@ -368,45 +368,30 @@ def generate_via_groq(prompt: str) -> str:
     return response.choices[0].message.content
 
 class QuizRequest(BaseModel):
-    topic: str
-    question_count: int
+    material: str
+    num_questions: int
     difficulty: str
-    format: str
 
-@app.post("/generate-quiz/topic")
-async def generate_quiz_topic(request: QuizRequest):
-    prompt = build_prompt(
-        context=f"The topic is: {request.topic}",
-        question_count=request.question_count,
-        difficulty=request.difficulty,
-        format_type=request.format
-    )
-    try:
-        result_text = generate_via_groq(prompt)
-        return json.loads(result_text)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/generate-quiz/file")
-async def generate_quiz_file(
-    file: UploadFile = File(...),
-    question_count: int = 5,
-    difficulty: str = "medium",
-    format: str = "multiple-choice"
-):
+@app.post("/extract-text")
+async def extract_text(file: UploadFile = File(...)):
     try:
         content = await file.read()
         context_text = extract_text_from_file(content, file.filename)
-        # truncate if too long (Groq token limit approx 8k context)
-        context_text = context_text[:25000] 
-        
-        prompt = build_prompt(
-            context=context_text,
-            question_count=question_count,
-            difficulty=difficulty,
-            format_type=format
-        )
-        
+        return {"text": context_text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/generate-quiz")
+async def generate_quiz(request: QuizRequest):
+    # truncate if too long (Groq token limit approx 8k context)
+    safe_material = request.material[:25000]
+    prompt = build_prompt(
+        context=safe_material,
+        question_count=request.num_questions,
+        difficulty=request.difficulty,
+        format_type="multiple-choice"
+    )
+    try:
         result_text = generate_via_groq(prompt)
         return json.loads(result_text)
     except Exception as e:
