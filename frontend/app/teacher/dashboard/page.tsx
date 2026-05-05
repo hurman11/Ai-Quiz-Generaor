@@ -117,7 +117,7 @@ export default function TeacherDashboardPage() {
       ? ((results.length / registeredCount) * 100).toFixed(0)
       : "0";
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     if (results.length === 0) return;
 
     const exportData = results.map((r, idx) => {
@@ -157,6 +157,16 @@ export default function TeacherDashboardPage() {
 
     const dateStr = new Date().toISOString().split("T")[0];
     XLSX.writeFile(workbook, `QuizResults_${dateStr}.xlsx`);
+
+    // Auto-clear results and registered students after downloading
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      await fetch(`${API_URL}/results`, { method: "DELETE" });
+      setResults([]);
+      setRegisteredCount(0);
+    } catch {
+      // ignore
+    }
   };
 
   return (

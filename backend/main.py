@@ -171,7 +171,17 @@ async def submit_result(submission: ResultSubmission):
 
 @app.get("/results")
 async def get_results():
-    return {"results": results, "registered_count": len(registered_students)}
+    return {
+        "results": results,
+        "registered_count": len(registered_students)
+    }
+
+@app.delete("/results")
+async def clear_results():
+    global results, registered_students
+    results.clear()
+    registered_students.clear()
+    return {"success": True}
 
 
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".txt"}
