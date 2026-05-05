@@ -24,83 +24,84 @@ export default function HomePage() {
   const router = useRouter();
 
   return (
-    <div className="flex min-h-screen flex-col" style={{ background: "var(--gradient-hero)" }}>
+  return (
+    <div className="flex h-screen flex-col overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
       {/* ── Navbar ── */}
-      <nav className="flex items-center justify-between px-4 sm:px-8 py-4 glass-nav z-10 w-full" style={{ background: "var(--bg-navbar)" }}>
+      <nav className="flex items-center justify-between px-4 sm:px-8 py-3 glass-nav z-10 w-full flex-shrink-0" style={{ background: "var(--bg-navbar)" }}>
         <div className="flex items-center gap-2">
           <span className="text-2xl animate-pulse">⚡</span>
           <span className="font-bold text-white text-lg sm:text-xl tracking-wider uppercase font-heading text-transparent bg-clip-text bg-[var(--gradient-brand)] drop-shadow-[0_0_10px_rgba(124,58,237,0.5)]">Nexus</span>
         </div>
         <button
           onClick={() => router.push("/teacher/login")}
-          className="btn-outline text-sm sm:text-base py-2 px-4 min-h-[40px] sm:min-h-[48px]"
+          className="btn-outline text-sm sm:text-base py-1.5 px-4 min-h-[36px] sm:min-h-[40px]"
         >
           Teacher Login
         </button>
       </nav>
 
       {/* ── Main Content ── */}
-      <main className="flex flex-1 flex-col items-center justify-center page-container z-10">
+      <main className="flex flex-1 flex-col items-center justify-center px-4 z-10 overflow-hidden">
         <motion.div
-          className="flex w-full max-w-4xl flex-col items-center gap-12"
+          className="flex w-full max-w-4xl flex-col items-center justify-center gap-6 sm:gap-10 h-full max-h-full py-4"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {/* ── Hero Text ── */}
-          <motion.div className="text-center max-w-3xl" variants={itemVariants}>
-            <h1 className="font-heading font-extrabold text-white leading-tight drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]" style={{ fontSize: "clamp(1.8rem, 6vw, 3.2rem)" }}>
+          <motion.div className="text-center max-w-3xl flex-shrink-0" variants={itemVariants}>
+            <h1 className="font-heading font-extrabold text-white leading-tight drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]" style={{ fontSize: "clamp(1.5rem, 5vw, 3rem)" }}>
               Ignite the Mind.<br/><span className="text-transparent bg-clip-text bg-[var(--gradient-brand)]">Automate the Rest.</span>
             </h1>
-            <p className="mt-6 text-[var(--text-secondary)] font-medium" style={{ fontSize: "clamp(0.95rem, 3vw, 1.1rem)" }}>
+            <p className="mt-4 text-[var(--text-secondary)] font-medium" style={{ fontSize: "clamp(0.85rem, 2.5vw, 1.05rem)" }}>
               Enter the Nexus. Transform any lecture, PDF, or document into a competitive, high-stakes real-time assessment in seconds. Built for forward-thinking educators and relentless students.
             </p>
           </motion.div>
 
           {/* ── Role Selection Cards ── */}
           <motion.div
-            className="flex flex-col sm:flex-row w-full gap-6 justify-center items-stretch"
+            className="flex flex-col sm:flex-row w-full gap-4 sm:gap-6 justify-center items-stretch flex-shrink-1 overflow-y-auto sm:overflow-visible no-scrollbar"
             variants={itemVariants}
           >
             {/* Teacher Card */}
-            <div className="edu-card flex flex-1 flex-col items-center justify-between text-center group cursor-default relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(124,58,237,0.3)] hover:-translate-y-2" style={{ padding: "clamp(20px, 3vw, 28px)" }}>
+            <div className="edu-card flex flex-1 flex-col items-center justify-between text-center group cursor-default relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(124,58,237,0.3)] hover:-translate-y-2" style={{ padding: "clamp(16px, 2vw, 24px)" }}>
               <div className="absolute top-0 left-0 w-full h-1 bg-[rgba(124,58,237,0.5)] group-hover:bg-[var(--accent-purple)] transition-colors"></div>
-              <div className="flex flex-col items-center gap-4 mb-6 relative z-10">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(124,58,237,0.15)] text-3xl transition-transform duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(124,58,237,0.4)]">
+              <div className="flex flex-col items-center gap-3 mb-4 relative z-10">
+                <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-[rgba(124,58,237,0.15)] text-2xl transition-transform duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(124,58,237,0.4)]">
                   👩‍🏫
                 </div>
-                <h2 className="font-heading text-xl font-bold text-white group-hover:text-[var(--accent-purple)] transition-colors">
+                <h2 className="font-heading text-lg sm:text-xl font-bold text-white group-hover:text-[var(--accent-purple)] transition-colors">
                   Teacher Access
                 </h2>
-                <p className="text-sm text-text-secondary">
+                <p className="text-xs sm:text-sm text-text-secondary">
                   Create AI quizzes from any material, assign them to your class, and track real-time results.
                 </p>
               </div>
               <button
                 onClick={() => router.push("/teacher/login")}
-                className="w-full btn-primary relative z-10"
+                className="w-full btn-primary relative z-10 min-h-[40px] sm:min-h-[48px]"
               >
                 Create a Quiz
               </button>
             </div>
 
             {/* Student Card */}
-            <div className="edu-card flex flex-1 flex-col items-center justify-between text-center group cursor-default relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,212,255,0.3)] hover:-translate-y-2" style={{ padding: "clamp(20px, 3vw, 28px)" }}>
+            <div className="edu-card flex flex-1 flex-col items-center justify-between text-center group cursor-default relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,212,255,0.3)] hover:-translate-y-2" style={{ padding: "clamp(16px, 2vw, 24px)" }}>
               <div className="absolute top-0 left-0 w-full h-1 bg-[rgba(0,212,255,0.5)] group-hover:bg-[var(--accent-cyan)] transition-colors"></div>
-              <div className="flex flex-col items-center gap-4 mb-6 relative z-10">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(0,212,255,0.15)] text-3xl transition-transform duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(0,212,255,0.4)]">
+              <div className="flex flex-col items-center gap-3 mb-4 relative z-10">
+                <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-[rgba(0,212,255,0.15)] text-2xl transition-transform duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(0,212,255,0.4)]">
                   🎓
                 </div>
-                <h2 className="font-heading text-xl font-bold text-white group-hover:text-[var(--accent-cyan)] transition-colors">
+                <h2 className="font-heading text-lg sm:text-xl font-bold text-white group-hover:text-[var(--accent-cyan)] transition-colors">
                   Student Portal
                 </h2>
-                <p className="text-sm text-text-secondary">
+                <p className="text-xs sm:text-sm text-text-secondary">
                   Join an active quiz session assigned by your teacher and test your knowledge.
                 </p>
               </div>
               <button
                 onClick={() => router.push("/student")}
-                className="w-full btn-primary animate-pulseGlow bg-transparent border-2 border-[var(--accent-cyan)] text-white hover:bg-[rgba(0,212,255,0.1)] relative z-10"
+                className="w-full btn-primary animate-pulseGlow bg-transparent border-2 border-[var(--accent-cyan)] text-white hover:bg-[rgba(0,212,255,0.1)] relative z-10 min-h-[40px] sm:min-h-[48px]"
               >
                 Join Session
               </button>
@@ -109,7 +110,7 @@ export default function HomePage() {
 
           {/* ── Footer ── */}
           <motion.p
-            className="text-xs text-[var(--text-muted)] mt-8 pb-8 text-center"
+            className="text-[10px] sm:text-xs text-[var(--text-muted)] mt-auto pt-4 text-center flex-shrink-0"
             variants={itemVariants}
           >
             Powered by Groq AI &nbsp;·&nbsp; Built for the future of education &nbsp;·&nbsp; <span className="font-semibold text-white">Made by Arthur</span>
