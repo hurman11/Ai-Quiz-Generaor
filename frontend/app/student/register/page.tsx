@@ -32,7 +32,15 @@ export default function StudentRegisterPage() {
         body: JSON.stringify({ name, email, password }),
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        // If the backend returns a 503 HTML page (like when HF is building/crashing)
+        setError("Backend server is starting up or unreachable. Please wait a minute and try again.");
+        setLoading(false);
+        return;
+      }
       
       if (!res.ok) {
         setError(data.detail || "Registration failed. Email might already be in use.");
@@ -46,7 +54,7 @@ export default function StudentRegisterPage() {
       
       router.push("/student");
     } catch {
-      setError("Network error. Please try again.");
+      setError("Network error. The server might be sleeping or unreachable.");
       setLoading(false);
     }
   };

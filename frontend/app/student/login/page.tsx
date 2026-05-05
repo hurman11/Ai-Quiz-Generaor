@@ -25,7 +25,14 @@ export default function StudentLoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        setError("Backend server is starting up or unreachable. Please wait a minute and try again.");
+        setLoading(false);
+        return;
+      }
       
       if (!res.ok) {
         setError(data.detail || "Invalid login credentials.");
@@ -39,7 +46,7 @@ export default function StudentLoginPage() {
       
       router.push("/student");
     } catch {
-      setError("Network error. Please try again.");
+      setError("Network error. The server might be sleeping or unreachable.");
       setLoading(false);
     }
   };
