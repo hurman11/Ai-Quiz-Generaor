@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import type { Question } from "@/types/quiz";
+import type { QuizQuestion as Question } from "@/types/quiz";
 
 interface QuizQuestionProps {
   question: Question;
@@ -65,7 +65,7 @@ export default function QuizQuestion({
               <div className="flex items-center justify-center rounded-lg bg-black/20 text-sm font-bold min-w-[32px] h-[32px] flex-shrink-0 mr-3 border border-white/5">
                 {letter}
               </div>
-              <span className="flex-1 mt-1 sm:mt-0 leading-snug">{text}</span>
+              <span className="flex-1 mt-1 sm:mt-0 leading-snug">{text as string}</span>
             </motion.button>
           );
         })}
