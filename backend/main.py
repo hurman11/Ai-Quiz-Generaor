@@ -17,7 +17,6 @@ import jwt
 # ML/Processing imports
 import PyPDF2
 from docx import Document
-import google.generativeai as genai
 from groq import Groq
 
 load_dotenv()
