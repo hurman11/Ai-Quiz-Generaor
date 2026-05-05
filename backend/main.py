@@ -231,6 +231,17 @@ async def check_student(user_id: int = Depends(get_current_user)):
                 return {"status": "completed"}
             return {"status": "new"}
 
+@app.get("/student/history")
+async def get_student_history(user_id: int = Depends(get_current_user)):
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT quiz_uuid, score, total, timestamp FROM results WHERE user_id = %s ORDER BY timestamp DESC", 
+                (user_id,)
+            )
+            results = cur.fetchall()
+            return {"history": [dict(r) for r in results]}
+
 class SubmitResult(BaseModel):
     score: int
     total: int
