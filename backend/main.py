@@ -53,8 +53,10 @@ async def get_active_quiz():
 
 @app.post("/active-quiz")
 async def set_active_quiz(quiz: dict):
-    global active_quiz_data
+    global active_quiz_data, registered_students, results
     active_quiz_data = quiz
+    registered_students.clear()
+    results.clear()
     return {"success": True}
 
 @app.delete("/active-quiz")
