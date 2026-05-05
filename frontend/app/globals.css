@@ -149,6 +149,19 @@ body {
   border-right: 1px solid var(--border);
 }
 
+/* ─── Animations ─── */
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 0px var(--accent-blue); }
+  50% { box-shadow: 0 0 20px var(--accent-blue); }
+  100% { box-shadow: 0 0 0px var(--accent-blue); }
+}
+
+@keyframes sweepGlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 /* ─── Buttons ─── */
 .btn-primary {
   display: inline-flex;
@@ -156,6 +169,7 @@ body {
   justify-content: center;
   gap: 0.5rem;
   background: var(--gradient-brand);
+  background-size: 200% auto;
   color: #ffffff;
   border: none;
   border-radius: 1rem;
@@ -164,13 +178,29 @@ body {
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transform: skewX(-20deg);
+  transition: all 0.5s ease;
+}
+
+.btn-primary:hover::after {
+  left: 150%;
 }
 
 .btn-primary:hover {
-  box-shadow: var(--shadow-glow);
-  transform: translateY(-1px);
+  box-shadow: 0 0 25px var(--accent-blue), 0 0 10px var(--accent-teal);
+  transform: translateY(-2px);
+  animation: sweepGlow 3s linear infinite;
 }
 
 .btn-primary:active {
@@ -182,6 +212,7 @@ body {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+  animation: none;
 }
 
 .btn-success {

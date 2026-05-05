@@ -23,23 +23,36 @@ export default function TeacherLoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="edu-card-solid flex flex-col gap-6"
-        style={{ width: "calc(100% - 32px)", maxWidth: "420px", margin: "0 auto", padding: "clamp(24px, 5vw, 36px)" }}
+        className="w-full max-w-md p-8 edu-card-solid relative overflow-hidden"
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        style={{
+          boxShadow: "0 0 40px rgba(99, 102, 241, 0.1)"
+        }}
       >
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold tracking-widest mb-6" style={{ background: "rgba(0,212,255,0.15)", color: "var(--accent-cyan)", borderColor: "var(--border-glow)" }}>
-            <span className="h-2 w-2 rounded-full bg-accent-cyan shadow-[0_0_8px_var(--accent-cyan)]"></span>
-            TEACHER ACCESS
+        <div className="absolute top-0 left-0 w-full h-1 bg-[var(--gradient-brand)] animate-pulseGlow"></div>
+        
+        {/* Home Button */}
+        <button 
+          onClick={() => router.push("/")}
+          className="absolute top-4 left-4 text-[var(--text-secondary)] hover:text-white flex items-center gap-1 text-sm transition-colors z-10 font-medium bg-black/20 px-2 py-1 rounded hover:bg-black/40"
+        >
+          <span>←</span> Home
+        </button>
+
+        <div className="flex flex-col gap-6 mt-4">
+          <div className="text-center">
+            <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-[rgba(59,130,246,0.15)] text-[var(--accent-blue)] text-3xl mb-4 border border-[var(--accent-blue)] shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+              👨‍🏫
+            </div>
+            <h1 className="font-heading text-2xl font-bold text-white">
+              Teacher Portal
+            </h1>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+              Enter your PIN to access the dashboard.
+            </p>
           </div>
-          <h1 className="font-heading text-2xl font-bold text-white">
-            Authentication Required
-          </h1>
-          <p className="mt-2 text-sm text-text-secondary">
-            Please enter your admin credentials to access the dashboard.
-          </p>
-        </div>
 
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">

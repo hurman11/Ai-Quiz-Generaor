@@ -63,12 +63,13 @@ export default function HomePage() {
             variants={itemVariants}
           >
             {/* Teacher Card */}
-            <div className="edu-card flex flex-1 flex-col items-center justify-between text-center group cursor-default" style={{ padding: "clamp(20px, 3vw, 28px)" }}>
-              <div className="flex flex-col items-center gap-4 mb-6">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(124,58,237,0.15)] text-3xl">
+            <div className="edu-card flex flex-1 flex-col items-center justify-between text-center group cursor-default relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(124,58,237,0.3)] hover:-translate-y-2" style={{ padding: "clamp(20px, 3vw, 28px)" }}>
+              <div className="absolute top-0 left-0 w-full h-1 bg-[rgba(124,58,237,0.5)] group-hover:bg-[var(--accent-purple)] transition-colors"></div>
+              <div className="flex flex-col items-center gap-4 mb-6 relative z-10">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(124,58,237,0.15)] text-3xl transition-transform duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(124,58,237,0.4)]">
                   👩‍🏫
                 </div>
-                <h2 className="font-heading text-xl font-bold text-white">
+                <h2 className="font-heading text-xl font-bold text-white group-hover:text-[var(--accent-purple)] transition-colors">
                   Teacher Access
                 </h2>
                 <p className="text-sm text-text-secondary">
@@ -77,19 +78,20 @@ export default function HomePage() {
               </div>
               <button
                 onClick={() => router.push("/teacher/login")}
-                className="w-full btn-primary"
+                className="w-full btn-primary relative z-10"
               >
                 Create a Quiz
               </button>
             </div>
 
             {/* Student Card */}
-            <div className="edu-card flex flex-1 flex-col items-center justify-between text-center group cursor-default" style={{ padding: "clamp(20px, 3vw, 28px)" }}>
-              <div className="flex flex-col items-center gap-4 mb-6">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(0,212,255,0.15)] text-3xl">
+            <div className="edu-card flex flex-1 flex-col items-center justify-between text-center group cursor-default relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,212,255,0.3)] hover:-translate-y-2" style={{ padding: "clamp(20px, 3vw, 28px)" }}>
+              <div className="absolute top-0 left-0 w-full h-1 bg-[rgba(0,212,255,0.5)] group-hover:bg-[var(--accent-cyan)] transition-colors"></div>
+              <div className="flex flex-col items-center gap-4 mb-6 relative z-10">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(0,212,255,0.15)] text-3xl transition-transform duration-300 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(0,212,255,0.4)]">
                   🎓
                 </div>
-                <h2 className="font-heading text-xl font-bold text-white">
+                <h2 className="font-heading text-xl font-bold text-white group-hover:text-[var(--accent-cyan)] transition-colors">
                   Student Portal
                 </h2>
                 <p className="text-sm text-text-secondary">
@@ -98,7 +100,7 @@ export default function HomePage() {
               </div>
               <button
                 onClick={() => router.push("/student")}
-                className="w-full btn-outline"
+                className="w-full btn-primary animate-pulseGlow bg-transparent border-2 border-[var(--accent-cyan)] text-white hover:bg-[rgba(0,212,255,0.1)] relative z-10"
               >
                 Join Session
               </button>

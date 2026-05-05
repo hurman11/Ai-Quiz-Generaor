@@ -62,13 +62,27 @@ export default function StudentRegisterPage() {
   return (
     <main className="flex min-h-screen items-center justify-center page-container relative z-10">
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md mx-auto"
+        className="w-full max-w-md p-8 edu-card-solid relative overflow-hidden"
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        style={{
+          boxShadow: "0 0 40px rgba(99, 102, 241, 0.1)"
+        }}
       >
-        <div className="edu-card-solid flex flex-col gap-6">
+        <div className="absolute top-0 left-0 w-full h-1 bg-[var(--gradient-brand)] animate-pulseGlow"></div>
+        
+        {/* Home Button */}
+        <button 
+          onClick={() => router.push("/")}
+          className="absolute top-4 left-4 text-[var(--text-secondary)] hover:text-white flex items-center gap-1 text-sm transition-colors z-10 font-medium bg-black/20 px-2 py-1 rounded hover:bg-black/40"
+        >
+          <span>←</span> Home
+        </button>
+
+        <div className="flex flex-col gap-6 mt-4">
           <div className="text-center">
-            <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-[rgba(0,212,255,0.15)] text-[var(--accent-cyan)] text-3xl mb-4 border border-[var(--accent-cyan)]">
+            <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-[rgba(16,185,129,0.15)] text-[var(--accent-green)] text-3xl mb-4 border border-[var(--accent-green)] shadow-[0_0_15px_rgba(16,185,129,0.2)]">
               🎓
             </div>
             <h1 className="font-heading text-2xl font-bold text-white">
