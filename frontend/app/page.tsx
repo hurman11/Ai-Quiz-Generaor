@@ -24,7 +24,6 @@ export default function HomePage() {
   const router = useRouter();
 
   return (
-  return (
     <div className="flex h-screen flex-col overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
       {/* ── Navbar ── */}
       <nav className="flex items-center justify-between px-4 sm:px-8 py-3 glass-nav z-10 w-full flex-shrink-0" style={{ background: "var(--bg-navbar)" }}>
