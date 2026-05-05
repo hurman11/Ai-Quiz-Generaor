@@ -109,10 +109,10 @@ export default function HomePage() {
 
           {/* ── Footer ── */}
           <motion.p
-            className="text-xs text-text-muted mt-8"
+            className="text-xs text-[var(--text-muted)] mt-8 pb-8 text-center"
             variants={itemVariants}
           >
-            Powered by Groq AI &nbsp;·&nbsp; Built for the future of education
+            Powered by Groq AI &nbsp;·&nbsp; Built for the future of education &nbsp;·&nbsp; <span className="font-semibold text-white">Made by Arthur</span>
           </motion.p>
         </motion.div>
       </main>
