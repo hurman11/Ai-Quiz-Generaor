@@ -1,24 +1,22 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Quiz } from "@/types/quiz";
 import QuizQuestion from "@/components/QuizQuestion";
 import ScoreCard from "@/components/ScoreCard";
 
-type Phase = "waiting" | "register" | "welcome" | "quiz" | "done" | "denied";
+type Phase = "loading" | "waiting" | "welcome" | "quiz" | "done" | "denied";
 
 const TIMER_SECONDS = 30;
 
 export default function StudentPage() {
   const router = useRouter();
-  const [phase, setPhase] = useState<Phase>("waiting");
+  const [phase, setPhase] = useState<Phase>("loading");
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   
   const [studentName, setStudentName] = useState("");
-  const [studentPin, setStudentPin] = useState("");
-  const [registerError, setRegisterError] = useState("");
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<string[]>([]);
@@ -28,9 +26,17 @@ export default function StudentPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Check for active quiz and student registration status
   useEffect(() => {
     const initialize = async () => {
+      const token = localStorage.getItem("student_token");
+      const sName = localStorage.getItem("student_name");
+      
+      if (!token || !sName) {
+        router.push("/student/login");
+        return;
+      }
+      setStudentName(sName);
+
       try {
         const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
         
@@ -45,31 +51,39 @@ export default function StudentPage() {
         setQuiz(parsed);
         setUserAnswers(new Array(parsed.questions.length).fill(""));
 
-        // 2. Check registration status
-        const storedName = sessionStorage.getItem("student_name");
-        const storedPin = sessionStorage.getItem("student_pin");
+        // 2. Check registration/completion status with JWT
+        const checkRes = await fetch(`${API_URL}/student/check`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
         
-        if (storedName && storedPin) {
-          setStudentName(storedName);
-          setStudentPin(storedPin);
-          
-          const checkRes = await fetch(`${API_URL}/student/check?name=${encodeURIComponent(storedName)}&pin=${encodeURIComponent(storedPin)}`);
-          if (checkRes.status === 403) {
+        if (checkRes.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem("student_token");
+          router.push("/student/login");
+          return;
+        }
+
+        if (checkRes.status === 403 || checkRes.status === 404) {
+          // If 403, completed. If 404, no active quiz found somehow
+          setPhase(checkRes.status === 403 ? "denied" : "waiting");
+        } else if (checkRes.ok) {
+          const data = await checkRes.json();
+          if (data.status === "completed") {
             setPhase("denied");
-          } else if (checkRes.ok) {
-            setPhase("welcome");
           } else {
-            setPhase("register");
+            setPhase("welcome");
           }
         } else {
-          setPhase("register");
+          setPhase("waiting");
         }
       } catch {
         setPhase("waiting");
       }
     };
     initialize();
-  }, []);
+  }, [router]);
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -133,52 +147,31 @@ export default function StudentPage() {
     }
   }, [timeLeft, phase, selectedAnswer, quiz, currentIndex]);
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!studentName.trim() || studentPin.length !== 4) {
-      setRegisterError("Please enter your name and a 4-digit PIN.");
-      return;
-    }
-
-    setRegisterError("");
-    try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      const res = await fetch(`${API_URL}/student/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: studentName.trim(), pin: studentPin }),
-      });
-
-      if (res.status === 403) {
-        setPhase("denied");
-        return;
-      }
-
-      if (res.ok) {
-        sessionStorage.setItem("student_name", studentName.trim());
-        sessionStorage.setItem("student_pin", studentPin);
-        setPhase("welcome");
-      } else {
-        setRegisterError("Registration failed. Please try again.");
-      }
-    } catch {
-      setRegisterError("Network error. Please try again.");
-    }
-  };
-
   const handleStartQuiz = () => {
-    if (studentName.trim() && quiz) {
+    if (quiz) {
       setPhase("quiz");
     }
   };
 
   const completeQuiz = async () => {
+    const finalScore = userAnswers.reduce((acc, ans, idx) => {
+      return acc + (ans === quiz?.questions[idx]?.correct ? 1 : 0);
+    }, 0);
+
     try {
+      const token = localStorage.getItem("student_token");
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      await fetch(`${API_URL}/student/complete`, {
+      
+      await fetch(`${API_URL}/submit-result`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: studentName.trim(), pin: studentPin }),
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          score: finalScore,
+          total: quiz?.questions.length || 0
+        }),
       });
     } catch {
       // Ignore errors on complete
@@ -210,10 +203,16 @@ export default function StudentPage() {
       }, 0)
     : 0;
 
+  const handleLogout = () => {
+    localStorage.removeItem("student_token");
+    localStorage.removeItem("student_name");
+    router.push("/student/login");
+  };
+
   const getTimerColor = (): string => {
-    if (timeLeft > 15) return "text-accent-green";
-    if (timeLeft > 5) return "text-accent-amber";
-    return "text-accent-red";
+    if (timeLeft > 15) return "text-[var(--accent-green)]";
+    if (timeLeft > 5) return "text-[var(--accent-amber)]";
+    return "text-[var(--accent-red)]";
   };
 
   const timerSize = 48;
@@ -224,41 +223,42 @@ export default function StudentPage() {
     timerCircumference - (timeLeft / TIMER_SECONDS) * timerCircumference;
 
   const getTimerStrokeColor = (): string => {
-    if (timeLeft > 15) return "#10b981"; // green
-    if (timeLeft > 5) return "#f59e0b"; // amber
-    return "#ef4444"; // red
+    if (timeLeft > 15) return "var(--accent-green)";
+    if (timeLeft > 5) return "var(--accent-amber)";
+    return "var(--accent-red)";
   };
+
+  if (phase === "loading") {
+    return <main className="min-h-screen bg-bg-base" />;
+  }
 
   // ── WAITING SCREEN ──
   if (phase === "waiting") {
     return (
-      <main className="flex min-h-screen items-center justify-center page-container">
+      <main className="flex min-h-screen flex-col items-center justify-center page-container">
+        <header className="absolute top-0 w-full p-4 flex justify-end">
+          <button onClick={handleLogout} className="text-sm text-[var(--text-secondary)] hover:text-white transition">Sign Out</button>
+        </header>
         <motion.div
           className="flex flex-col items-center gap-6 text-center max-w-md w-full"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-bg-elevated text-text-muted text-4xl border border-border">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[var(--bg-elevated)] text-[var(--text-muted)] text-4xl border border-[var(--border)]">
             ⏳
           </div>
-          <h1 className="font-heading text-2xl font-bold text-text-primary">
-            No Quiz Active Right Now
+          <h1 className="font-heading text-2xl font-bold text-white">
+            No Quiz Active
           </h1>
-          <p className="text-text-secondary">
+          <p className="text-[var(--text-secondary)]">
             Please wait for your teacher to create and share a quiz. Once it's ready, refresh this page.
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="btn-outline w-full max-w-[200px]"
+            className="btn-primary w-full max-w-[200px]"
           >
             Refresh
-          </button>
-          <button
-            onClick={() => router.push("/")}
-            className="text-sm text-text-muted hover:text-white transition-colors"
-          >
-            ← Back to Home
           </button>
         </motion.div>
       </main>
@@ -268,103 +268,43 @@ export default function StudentPage() {
   // ── ACCESS DENIED SCREEN ──
   if (phase === "denied") {
     return (
-      <main className="flex min-h-screen items-center justify-center page-container">
+      <main className="flex min-h-screen flex-col items-center justify-center page-container">
+        <header className="absolute top-0 w-full p-4 flex justify-end">
+          <button onClick={handleLogout} className="text-sm text-[var(--text-secondary)] hover:text-white transition">Sign Out</button>
+        </header>
         <motion.div
           className="edu-card-solid flex flex-col items-center gap-6 text-center max-w-md w-full"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
         >
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[rgba(239,68,68,0.15)] text-accent-red text-4xl border border-accent-red">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[rgba(239,68,68,0.15)] text-[var(--accent-red)] text-4xl border border-[var(--accent-red)]">
             ⛔
           </div>
           <h1 className="font-heading text-2xl font-bold text-white">
             Access Denied
           </h1>
-          <p className="text-text-secondary">
-            You have already completed this quiz. Multiple attempts are not permitted.
+          <p className="text-[var(--text-secondary)]">
+            You have already completed the current active quiz. Multiple attempts are not permitted.
           </p>
           <button
-            onClick={() => router.push("/")}
+            onClick={() => window.location.reload()}
             className="btn-primary w-full"
           >
-            Back to Home
+            Check for new quizzes
           </button>
         </motion.div>
       </main>
     );
   }
 
-  // ── REGISTRATION SCREEN ──
-  if (phase === "register" && quiz) {
-    return (
-      <main className="flex min-h-screen items-center justify-center page-container">
-        <motion.div
-          className="w-full max-w-md mx-auto"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="edu-card-solid flex flex-col gap-6">
-            <div className="text-center">
-              <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-[rgba(0,212,255,0.15)] text-3xl mb-4">
-                🎓
-              </div>
-              <h1 className="font-heading text-2xl font-bold text-white">
-                Student Registration
-              </h1>
-              <p className="mt-2 text-sm text-text-secondary">
-                Enter your details to join the quiz session.
-              </p>
-            </div>
-
-            <form onSubmit={handleRegister} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-text-secondary">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                  placeholder="e.g. Jane Doe"
-                  className="edu-input w-full"
-                  required
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-text-secondary">
-                  4-Digit PIN
-                </label>
-                <input
-                  type="text"
-                  maxLength={4}
-                  pattern="\d{4}"
-                  value={studentPin}
-                  onChange={(e) => setStudentPin(e.target.value.replace(/\D/g, ''))}
-                  placeholder="e.g. 1234"
-                  className="edu-input w-full text-center tracking-[0.5em] text-lg font-mono"
-                  required
-                />
-                <p className="text-xs text-text-muted mt-1">Used to prevent duplicate names and reconnect if disconnected.</p>
-              </div>
-
-              {registerError && (
-                <p className="error-banner text-center">{registerError}</p>
-              )}
-
-              <button type="submit" className="btn-primary w-full mt-2 min-h-[52px]">
-                Register & Continue
-              </button>
-            </form>
-          </div>
-        </motion.div>
-      </main>
-    );
-  }
-
-  // ── WELCOME SCREEN ──
+  // ── WELCOME SCREEN (Dashboard) ──
   if (phase === "welcome" && quiz) {
     return (
-      <main className="flex min-h-screen items-center justify-center page-container">
+      <main className="flex min-h-screen flex-col items-center justify-center page-container">
+        <header className="absolute top-0 w-full p-4 flex justify-between items-center">
+          <span className="font-semibold text-white">Hi, {studentName}</span>
+          <button onClick={handleLogout} className="text-sm text-[var(--text-secondary)] hover:text-white transition">Sign Out</button>
+        </header>
         <motion.div
           className="w-full max-w-md mx-auto"
           initial={{ opacity: 0, y: 8 }}
@@ -372,21 +312,21 @@ export default function StudentPage() {
           transition={{ duration: 0.4 }}
         >
           <div className="edu-card-solid flex flex-col items-center gap-6 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(16,185,129,0.15)] text-3xl">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(16,185,129,0.15)] border border-[var(--accent-green)] text-3xl">
               🎯
             </div>
             <div>
               <h1 className="font-heading text-2xl font-bold text-white">
                 {quiz.title}
               </h1>
-              <p className="mt-2 text-sm text-text-secondary">
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">
                 {quiz.questions.length} questions · {TIMER_SECONDS}s per
-                question · Good luck, {studentName}!
+                question
               </p>
             </div>
 
             {/* Timer info */}
-            <div className="flex items-center gap-2 rounded-lg bg-[rgba(245,158,11,0.1)] border border-accent-amber px-4 py-3 text-sm text-accent-amber w-full text-left">
+            <div className="flex items-center gap-2 rounded-lg bg-[rgba(245,158,11,0.1)] border border-[var(--accent-amber)] px-4 py-3 text-sm text-[var(--accent-amber)] w-full text-left">
               <span className="text-xl">⏱️</span>
               <span>
                 You have <strong>{TIMER_SECONDS} seconds</strong> per question. Unanswered questions will be skipped automatically.
@@ -422,7 +362,7 @@ export default function StudentPage() {
             questions={quiz.questions}
             userAnswers={userAnswers}
             studentName={studentName}
-            onBackHome={() => router.push("/")}
+            onBackHome={() => window.location.reload()}
           />
         </motion.div>
       </main>
@@ -449,8 +389,8 @@ export default function StudentPage() {
             <h1 className="font-heading text-lg font-bold text-white truncate max-w-full sm:max-w-[70%]">
               {quiz.title}
             </h1>
-            <span className="text-sm text-text-secondary truncate">
-              Hi, {studentName} 👋
+            <span className="text-sm text-[var(--text-secondary)] truncate">
+              Taking as {studentName}
             </span>
           </motion.div>
 
@@ -494,7 +434,7 @@ export default function StudentPage() {
 
             {/* Progress Info */}
             <div className="flex-1">
-              <div className="mb-2 flex items-center justify-between text-xs font-semibold text-text-secondary uppercase tracking-wider">
+              <div className="mb-2 flex items-center justify-between text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                 <span>
                   Q {currentIndex + 1} / {totalQuestions}
                 </span>
@@ -513,7 +453,7 @@ export default function StudentPage() {
           <AnimatePresence>
             {timeLeft === 0 && selectedAnswer === null && (
               <motion.div
-                className="mb-4 flex items-center gap-2 rounded-lg border border-accent-red bg-[rgba(239,68,68,0.1)] px-4 py-3 text-sm font-medium text-accent-red"
+                className="mb-4 flex items-center gap-2 rounded-lg border border-[var(--accent-red)] bg-[rgba(239,68,68,0.1)] px-4 py-3 text-sm font-medium text-[var(--accent-red)]"
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}

@@ -62,25 +62,7 @@ export default function ScoreCard({
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
 
-  // Submit result to backend (once)
-  useEffect(() => {
-    if (submitted.current || !studentName) return;
-    submitted.current = true;
-
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    fetch(`${API_URL}/submit-result`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        student_name: studentName,
-        score,
-        total,
-        timestamp: new Date().toISOString(),
-      }),
-    }).catch(() => {
-      /* silent failure */
-    });
-  }, [studentName, score, total]);
+  // Submit logic is now handled securely in the parent component via JWT
 
   // Performance message
   const getMessage = (): { text: string; emoji: string } => {

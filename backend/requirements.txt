@@ -6,3 +6,6 @@ pydantic
 python-multipart
 PyPDF2
 python-docx
+psycopg2-binary
+passlib[bcrypt]
+pyjwt
