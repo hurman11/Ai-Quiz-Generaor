@@ -37,9 +37,12 @@ if not DATABASE_URL:
     print("WARNING: DATABASE_URL not set. Falling back to in-memory mode if DB calls fail.")
 
 def get_db():
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
-    conn.autocommit = True
-    return conn
+    try:
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        conn.autocommit = True
+        return conn
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"DB Connection Error: {str(e)}")
 
 def init_db():
     if not DATABASE_URL:
@@ -126,32 +129,42 @@ class UserLogin(BaseModel):
 
 @app.post("/auth/register")
 async def register(user: UserRegister):
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT id FROM users WHERE email = %s", (user.email,))
-            if cur.fetchone():
-                raise HTTPException(status_code=400, detail="Email already registered")
-            
-            hashed_pw = get_password_hash(user.password)
-            cur.execute(
-                "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s) RETURNING id, name",
-                (user.name, user.email, hashed_pw)
-            )
-            new_user = cur.fetchone()
-            token = create_access_token({"sub": str(new_user["id"])})
-            return {"token": token, "user": {"id": new_user["id"], "name": new_user["name"], "email": user.email}}
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT id FROM users WHERE email = %s", (user.email,))
+                if cur.fetchone():
+                    raise HTTPException(status_code=400, detail="Email already registered")
+                
+                hashed_pw = get_password_hash(user.password)
+                cur.execute(
+                    "INSERT INTO users (name, email, password_hash) VALUES (%s, %s, %s) RETURNING id, name",
+                    (user.name, user.email, hashed_pw)
+                )
+                new_user = cur.fetchone()
+                token = create_access_token({"sub": str(new_user["id"])})
+                return {"token": token, "user": {"id": new_user["id"], "name": new_user["name"], "email": user.email}}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Server Crash: {str(e)} - Type: {type(e)}")
 
 @app.post("/auth/login")
 async def login(user: UserLogin):
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT id, name, email, password_hash FROM users WHERE email = %s", (user.email,))
-            db_user = cur.fetchone()
-            if not db_user or not verify_password(user.password, db_user["password_hash"]):
-                raise HTTPException(status_code=401, detail="Invalid email or password")
-            
-            token = create_access_token({"sub": str(db_user["id"])})
-            return {"token": token, "user": {"id": db_user["id"], "name": db_user["name"], "email": db_user["email"]}}
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT id, name, email, password_hash FROM users WHERE email = %s", (user.email,))
+                db_user = cur.fetchone()
+                if not db_user or not verify_password(user.password, db_user["password_hash"]):
+                    raise HTTPException(status_code=401, detail="Invalid email or password")
+                
+                token = create_access_token({"sub": str(db_user["id"])})
+                return {"token": token, "user": {"id": db_user["id"], "name": db_user["name"], "email": db_user["email"]}}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Server Crash: {str(e)} - Type: {type(e)}")
 
 @app.get("/auth/me")
 async def get_me(user_id: int = Depends(get_current_user)):
