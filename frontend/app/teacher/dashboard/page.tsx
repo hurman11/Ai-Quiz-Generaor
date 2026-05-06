@@ -128,7 +128,15 @@ export default function TeacherDashboardPage() {
     return activeQuiz.questions.map((q, idx) => {
       let correctCount = 0;
       results.forEach(r => {
-        if (r.question_details && r.question_details[idx]?.correct) {
+        let details = r.question_details;
+        if (typeof details === 'string') {
+          try {
+            details = JSON.parse(details);
+          } catch {
+            details = {};
+          }
+        }
+        if (details && details[idx] && details[idx].correct) {
           correctCount++;
         }
       });
