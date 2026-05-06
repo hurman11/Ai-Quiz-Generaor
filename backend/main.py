@@ -209,8 +209,6 @@ async def set_active_quiz(quiz: dict):
                 """,
                 (json.dumps(quiz), new_uuid)
             )
-            # Delete old results so the teacher dashboard starts fresh
-            cur.execute("DELETE FROM results")
     return {"success": True, "quiz_uuid": new_uuid}
 
 @app.delete("/active-quiz")
@@ -218,7 +216,6 @@ async def clear_active_quiz():
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("DELETE FROM active_quiz WHERE id = 1")
-            cur.execute("DELETE FROM results")
     return {"success": True}
 
 # ─── STUDENT CHECK & SUBMISSION ───
@@ -317,7 +314,10 @@ async def get_results():
 async def clear_results():
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("DELETE FROM results")
+            cur.execute("SELECT quiz_uuid FROM active_quiz WHERE id = 1")
+            active_row = cur.fetchone()
+            if active_row:
+                cur.execute("DELETE FROM results WHERE quiz_uuid = %s", (active_row["quiz_uuid"],))
     return {"success": True}
 
 
