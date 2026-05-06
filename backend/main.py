@@ -76,10 +76,18 @@ def init_db():
                     score INTEGER NOT NULL,
                     total INTEGER NOT NULL,
                     timestamp TIMESTAMP NOT NULL,
+                    time_taken INTEGER DEFAULT 0,
+                    question_details JSONB,
                     UNIQUE(quiz_uuid, user_id)
                 )
             """)
             
+            # Alter existing results table if it lacks the new columns (for backward compatibility)
+            try:
+                cur.execute("ALTER TABLE results ADD COLUMN IF NOT EXISTS time_taken INTEGER DEFAULT 0")
+                cur.execute("ALTER TABLE results ADD COLUMN IF NOT EXISTS question_details JSONB")
+            except Exception:
+                pass
 try:
     init_db()
 except Exception as e:
@@ -245,6 +253,8 @@ async def get_student_history(user_id: int = Depends(get_current_user)):
 class SubmitResult(BaseModel):
     score: int
     total: int
+    time_taken: int = 0
+    question_details: dict = {}
 
 @app.post("/submit-result")
 async def submit_result(result: SubmitResult, user_id: int = Depends(get_current_user)):
@@ -266,10 +276,10 @@ async def submit_result(result: SubmitResult, user_id: int = Depends(get_current
             try:
                 cur.execute(
                     """
-                    INSERT INTO results (quiz_uuid, user_id, student_name, score, total, timestamp)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    INSERT INTO results (quiz_uuid, user_id, student_name, score, total, timestamp, time_taken, question_details)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """,
-                    (quiz_uuid, user_id, user["name"], result.score, result.total, datetime.utcnow())
+                    (quiz_uuid, user_id, user["name"], result.score, result.total, datetime.utcnow(), result.time_taken, json.dumps(result.question_details))
                 )
             except psycopg2.errors.UniqueViolation:
                 # Already submitted
@@ -291,7 +301,7 @@ async def get_results():
             quiz_uuid = active_row["quiz_uuid"]
             
             # Get all results for this quiz
-            cur.execute("SELECT student_name, score, total, timestamp FROM results WHERE quiz_uuid = %s ORDER BY timestamp DESC", (quiz_uuid,))
+            cur.execute("SELECT student_name, score, total, timestamp, time_taken, question_details FROM results WHERE quiz_uuid = %s ORDER BY timestamp DESC", (quiz_uuid,))
             results = cur.fetchall()
             
             # Total users registered in the system

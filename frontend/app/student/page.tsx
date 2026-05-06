@@ -8,7 +8,7 @@ import QuizQuestion from "@/components/QuizQuestion";
 import ScoreCard from "@/components/ScoreCard";
 
 type Phase = "loading" | "waiting" | "welcome" | "quiz" | "done" | "denied";
-type TabKey = "active" | "history";
+type TabKey = "active" | "history" | "leaderboard";
 
 const TIMER_SECONDS = 30;
 
@@ -19,8 +19,16 @@ interface StudentHistory {
   timestamp: string;
 }
 
+interface LeaderboardEntry {
+  student_name: string;
+  score: number;
+  total: number;
+  time_taken?: number;
+}
+
 const tabs: { key: TabKey; label: string; icon: string }[] = [
   { key: "active", label: "Active Quiz", icon: "🎯" },
+  { key: "leaderboard", label: "Leaderboard", icon: "🏆" },
   { key: "history", label: "My Results", icon: "📊" },
 ];
 
@@ -32,6 +40,8 @@ export default function StudentPage() {
   const [studentName, setStudentName] = useState("");
   const [history, setHistory] = useState<StudentHistory[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
 
   // Quiz State
   const [phase, setPhase] = useState<Phase>("loading");
@@ -40,6 +50,7 @@ export default function StudentPage() {
   const [userAnswers, setUserAnswers] = useState<string[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
+  const [startTime, setStartTime] = useState<number>(0);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
@@ -124,6 +135,39 @@ export default function StudentPage() {
     }
   }, [activeTab]);
 
+  // Fetch Leaderboard
+  useEffect(() => {
+    if (activeTab === "leaderboard") {
+      const fetchLeaderboard = async () => {
+        setLeaderboardLoading(true);
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+          const res = await fetch(`${API_URL}/results`);
+          if (res.ok) {
+            const data = await res.json();
+            // Sort by score descending, then by time taken ascending
+            const sortedResults = (data.results || []).sort((a: any, b: any) => {
+              if (b.score !== a.score) return b.score - a.score;
+              if (a.time_taken !== undefined && b.time_taken !== undefined) {
+                return a.time_taken - b.time_taken;
+              }
+              return 0;
+            });
+            setLeaderboard(sortedResults);
+          }
+        } catch {
+          // ignore
+        } finally {
+          setLeaderboardLoading(false);
+        }
+      };
+      fetchLeaderboard();
+      // Auto-refresh leaderboard every 5 seconds
+      const interval = setInterval(fetchLeaderboard, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
+
   // Timers cleanup
   useEffect(() => {
     return () => {
@@ -186,13 +230,26 @@ export default function StudentPage() {
   }, [timeLeft, phase, selectedAnswer, quiz, currentIndex]);
 
   const handleStartQuiz = () => {
-    if (quiz) setPhase("quiz");
+    if (quiz) {
+      setPhase("quiz");
+      setStartTime(Date.now());
+    }
   };
 
   const completeQuiz = async () => {
     const finalScore = userAnswers.reduce((acc, ans, idx) => {
       return acc + (ans === quiz?.questions[idx]?.correct ? 1 : 0);
     }, 0);
+
+    const timeTaken = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
+    
+    const questionDetails: Record<string, any> = {};
+    quiz?.questions.forEach((q, idx) => {
+      questionDetails[idx] = {
+        correct: userAnswers[idx] === q.correct,
+        userAnswer: userAnswers[idx] || null
+      };
+    });
 
     try {
       const token = localStorage.getItem("student_token");
@@ -205,7 +262,9 @@ export default function StudentPage() {
         },
         body: JSON.stringify({ 
           score: finalScore,
-          total: quiz?.questions.length || 0
+          total: quiz?.questions.length || 0,
+          time_taken: timeTaken,
+          question_details: questionDetails
         }),
       });
     } catch {
@@ -575,6 +634,92 @@ export default function StudentPage() {
     );
   };
 
+  const renderLeaderboard = () => {
+    return (
+      <div className="flex flex-col gap-6 max-w-4xl mx-auto mt-4">
+        <h2 className="text-xl font-bold text-white mb-2">Live Leaderboard</h2>
+        
+        {leaderboardLoading ? (
+          <div className="flex items-center justify-center p-12">
+            <svg className="h-8 w-8 animate-spin text-accent-cyan" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+              <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
+            </svg>
+          </div>
+        ) : leaderboard.length === 0 ? (
+          <div className="edu-card-solid text-center py-12">
+            <span className="text-4xl block mb-4">🏆</span>
+            <h3 className="text-lg font-medium text-white">No results yet</h3>
+            <p className="text-[var(--text-secondary)] mt-2">Be the first to complete the quiz!</p>
+          </div>
+        ) : (
+          <div className="edu-card-solid overflow-hidden !p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-[var(--text-secondary)]">
+                <thead className="bg-[var(--bg-base)] text-xs uppercase text-[var(--text-muted)]">
+                  <tr>
+                    <th className="px-6 py-4 font-semibold text-center">Rank</th>
+                    <th className="px-6 py-4 font-semibold">Student</th>
+                    <th className="px-6 py-4 font-semibold text-center">Score</th>
+                    <th className="px-6 py-4 font-semibold text-right">Time Taken</th>
+                    <th className="px-6 py-4 font-semibold text-center">Badges</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]">
+                  {leaderboard.map((r, i) => {
+                    const pct = Math.round((r.score / r.total) * 100);
+                    const badges = [];
+                    if (pct === 100) badges.push({ icon: "🌟", label: "Perfect Score", color: "var(--accent-amber)" });
+                    if (i === 0) badges.push({ icon: "🥇", label: "1st Place", color: "var(--accent-cyan)" });
+                    if (r.time_taken && r.time_taken < 15) badges.push({ icon: "⚡", label: "Speed Demon", color: "var(--accent-green)" });
+
+                    return (
+                      <motion.tr 
+                        key={i}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className={`hover:bg-[var(--bg-base)] transition-colors ${r.student_name === studentName ? "bg-[rgba(0,212,255,0.05)] border-l-4 border-l-[var(--accent-cyan)]" : ""}`}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-white text-lg">
+                          #{i + 1}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`font-bold ${r.student_name === studentName ? "text-[var(--accent-cyan)]" : "text-white"}`}>
+                            {r.student_name} {r.student_name === studentName && "(You)"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className={`inline-flex items-center justify-center rounded-full px-3 py-1 font-bold ${
+                            pct >= 80 ? "bg-accent-green/10 text-accent-green" :
+                            pct >= 60 ? "bg-accent-amber/10 text-accent-amber" :
+                            "bg-accent-red/10 text-accent-red"
+                          }`}>
+                            {r.score} / {r.total}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right font-mono">
+                          {r.time_taken ? `${r.time_taken}s` : "N/A"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap flex items-center justify-center gap-1 text-xl">
+                          {badges.map((b, idx) => (
+                            <span key={idx} title={b.label} className="drop-shadow-md cursor-help">
+                              {b.icon}
+                            </span>
+                          ))}
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-screen bg-bg-dark text-text-primary overflow-hidden">
       {/* ── Sidebar ── */}
@@ -634,12 +779,6 @@ export default function StudentPage() {
             <h1 className="font-bold text-text-primary">Student</h1>
           </div>
           <div className="flex gap-2">
-             <button
-              onClick={() => setActiveTab(activeTab === "active" ? "history" : "active")}
-              className="text-xs bg-bg-elevated px-3 py-1 rounded text-text-secondary"
-            >
-              {activeTab === "active" ? "History" : "Active Quiz"}
-            </button>
             <button onClick={handleLogout} className="text-xs text-accent-red px-2">Logout</button>
           </div>
         </header>
@@ -658,8 +797,28 @@ export default function StudentPage() {
         </div>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
-          {activeTab === "active" ? renderActiveQuiz() : renderHistory()}
+          {activeTab === "active" && renderActiveQuiz()}
+          {activeTab === "leaderboard" && renderLeaderboard()}
+          {activeTab === "history" && renderHistory()}
         </main>
+      </div>
+
+      {/* ── Mobile Bottom Tab Bar ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] pb-[env(safe-area-inset-bottom)] border-t border-[var(--border)] bg-bg-dark md:hidden">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex flex-1 flex-col items-center justify-center gap-1 transition-colors ${
+              activeTab === tab.key
+                ? "text-[var(--accent-cyan)]"
+                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+            }`}
+          >
+            <span className="text-xl leading-none">{tab.icon}</span>
+            <span className="text-[0.65rem] font-semibold uppercase tracking-wide">{tab.label}</span>
+          </button>
+        ))}
       </div>
     </div>
   );
