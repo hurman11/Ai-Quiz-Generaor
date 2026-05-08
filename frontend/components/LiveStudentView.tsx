@@ -45,7 +45,19 @@ export default function LiveStudentView({ quiz, liveState, userAnswers, setUserA
   };
 
   return (
-    <div className="flex h-full flex-col items-center justify-center p-4">
+    <div 
+      className="fixed inset-0 z-40 flex h-full flex-col items-center justify-center p-4 overflow-hidden"
+      style={{
+        background: "linear-gradient(135deg, #09090e 0%, #1f0933 20%, #022436 40%, #3a0a2a 60%, #0a1b38 80%, #210b33 100%)",
+        backgroundSize: "400% 400%",
+        animation: "gradientShift 15s ease infinite"
+      }}
+    >
+      {/* Cyber Glowing Orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-[var(--accent-purple)] rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-pulse pointer-events-none" style={{ animationDuration: '5s' }} />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-[var(--accent-cyan)] rounded-full mix-blend-screen filter blur-[100px] opacity-20 pointer-events-none" style={{ animation: 'pulse 7s infinite alternate' }} />
+      <div className="absolute top-[40%] left-[30%] w-[40%] h-[40%] bg-[var(--accent-amber)] rounded-full mix-blend-screen filter blur-[100px] opacity-15 pointer-events-none" style={{ animation: 'pulse 9s infinite alternate-reverse' }} />
+
       <AnimatePresence mode="wait">
         
         {phase === "lobby" && (

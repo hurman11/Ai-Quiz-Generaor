@@ -90,8 +90,19 @@ export default function HostView({ activeQuiz, setActiveQuiz, results, registere
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0f172a] overflow-hidden flex flex-col">
-      <div className="absolute inset-0 bg-gradient-to-br from-[#1e1b4b]/80 via-[#0f172a] to-[#020617] pointer-events-none" />
+    <div 
+      className="fixed inset-0 z-50 overflow-hidden flex flex-col"
+      style={{
+        background: "linear-gradient(135deg, #09090e 0%, #1f0933 20%, #022436 40%, #3a0a2a 60%, #0a1b38 80%, #210b33 100%)",
+        backgroundSize: "400% 400%",
+        animation: "gradientShift 15s ease infinite"
+      }}
+    >
+      {/* Cyber Glowing Orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[var(--accent-purple)] rounded-full mix-blend-screen filter blur-[150px] opacity-40 animate-pulse pointer-events-none" style={{ animationDuration: '6s' }} />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[var(--accent-cyan)] rounded-full mix-blend-screen filter blur-[150px] opacity-30 pointer-events-none" style={{ animation: 'pulse 8s infinite alternate' }} />
+      <div className="absolute top-[40%] left-[30%] w-[30%] h-[30%] bg-[var(--accent-amber)] rounded-full mix-blend-screen filter blur-[150px] opacity-20 pointer-events-none" style={{ animation: 'pulse 10s infinite alternate-reverse' }} />
+
       
       {/* Header */}
       <header className="relative z-10 p-6 flex justify-between items-center bg-black/20 backdrop-blur-md border-b border-white/10">
