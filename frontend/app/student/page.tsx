@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Quiz } from "@/types/quiz";
 import QuizQuestion from "@/components/QuizQuestion";
 import ScoreCard from "@/components/ScoreCard";
+import LiveStudentView from "@/components/LiveStudentView";
 
 type Phase = "loading" | "enter_code" | "waiting" | "welcome" | "quiz" | "done" | "denied";
 type TabKey = "active" | "history" | "leaderboard";
@@ -53,6 +54,7 @@ export default function StudentPage() {
   const [startTime, setStartTime] = useState<number>(0);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
+  const [liveState, setLiveState] = useState<any>(null);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
@@ -186,7 +188,34 @@ export default function StudentPage() {
     };
   }, []);
 
-  // Timer logic for quiz
+  // Poll for Live Mode State
+  useEffect(() => {
+    if (!quiz || phase === "loading" || phase === "enter_code" || phase === "denied" || phase === "waiting") return;
+    
+    let interval: any;
+    const pollQuiz = async () => {
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const res = await fetch(`${API_URL}/active-quiz`);
+        if (res.ok) {
+          const parsed = await res.json();
+          if (parsed.live_state) {
+             setLiveState(parsed.live_state);
+             if (!quiz.live_state) {
+               setQuiz(parsed);
+             }
+          } else {
+             setLiveState(null);
+          }
+        }
+      } catch { /* ignore */ }
+    };
+    
+    interval = setInterval(pollQuiz, 1500);
+    return () => clearInterval(interval);
+  }, [quiz, phase]);
+
+  // Timer logic for quiz (async mode)
   useEffect(() => {
     if (phase !== "quiz" || selectedAnswer !== null) {
       if (timerRef.current) {
@@ -274,6 +303,7 @@ export default function StudentPage() {
       }
 
       setQuiz(parsed);
+      if (parsed?.live_state) setLiveState(parsed.live_state);
       setUserAnswers(new Array(parsed?.questions?.length || 0).fill(""));
 
       const checkRes = await fetch(`${API_URL}/student/check`, {
@@ -401,6 +431,10 @@ export default function StudentPage() {
 
   // --- Render Active Quiz Phase ---
   const renderActiveQuiz = () => {
+    if (liveState && quiz) {
+      return <LiveStudentView quiz={quiz} liveState={liveState} userAnswers={userAnswers} setUserAnswers={setUserAnswers} />;
+    }
+
     if (phase === "enter_code") {
       return (
         <div className="flex h-full flex-col items-center justify-center">

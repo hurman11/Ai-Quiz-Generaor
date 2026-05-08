@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import QuizForm from "@/components/QuizForm";
+import HostView from "@/components/HostView";
 import type { Quiz } from "@/types/quiz";
 import * as XLSX from "xlsx";
 
@@ -172,6 +173,31 @@ export default function TeacherDashboardPage() {
     }
   };
 
+  const handleHostLiveGame = async () => {
+    if (!activeQuiz) return;
+    const updatedQuiz = { ...activeQuiz, live_state: { phase: "lobby", question_index: 0, start_time: Date.now() } };
+    
+    // Save locally
+    setActiveQuiz(updatedQuiz);
+    localStorage.setItem("active_quiz", JSON.stringify(updatedQuiz));
+    
+    // Push to backend
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    try {
+      await fetch(`${API_URL}/active-quiz`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedQuiz),
+      });
+    } catch {
+      // ignore
+    }
+  };
+
+  if (activeQuiz?.live_state) {
+    return <HostView activeQuiz={activeQuiz} setActiveQuiz={setActiveQuiz} results={results} registeredCount={registeredCount} />;
+  }
+
   return (
     <div className="flex min-h-screen flex-col pb-[64px] md:pb-0 bg-transparent">
       {/* ── Top Navbar ── */}
@@ -302,12 +328,21 @@ export default function TeacherDashboardPage() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={handleClearQuiz}
-                      className="btn-danger w-full sm:w-auto self-start mt-2"
-                    >
-                      Clear Active Quiz
-                    </button>
+                    {/* Actions */}
+                    <div className="flex flex-col sm:flex-row gap-4 mt-2">
+                      <button
+                        onClick={handleHostLiveGame}
+                        className="btn-primary flex-1 py-4 text-lg shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_30px_rgba(34,211,238,0.5)]"
+                      >
+                        📺 Host Live Game
+                      </button>
+                      <button
+                        onClick={handleClearQuiz}
+                        className="btn-danger flex-1 py-4 text-lg"
+                      >
+                        Clear Active Quiz
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="edu-card flex flex-col items-center gap-4 py-12 text-center" style={{ borderStyle: 'dashed' }}>
