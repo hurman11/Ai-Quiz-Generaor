@@ -16,4 +16,6 @@ export interface QuizQuestion {
 export interface Quiz {
   title: string;
   questions: QuizQuestion[];
+  quiz_code?: string;
+  quiz_uuid?: string;
 }

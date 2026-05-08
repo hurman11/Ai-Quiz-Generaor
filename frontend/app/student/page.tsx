@@ -7,7 +7,7 @@ import type { Quiz } from "@/types/quiz";
 import QuizQuestion from "@/components/QuizQuestion";
 import ScoreCard from "@/components/ScoreCard";
 
-type Phase = "loading" | "waiting" | "welcome" | "quiz" | "done" | "denied";
+type Phase = "loading" | "enter_code" | "waiting" | "welcome" | "quiz" | "done" | "denied";
 type TabKey = "active" | "history" | "leaderboard";
 
 const TIMER_SECONDS = 30;
@@ -51,6 +51,8 @@ export default function StudentPage() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
   const [startTime, setStartTime] = useState<number>(0);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState("");
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
@@ -76,9 +78,15 @@ export default function StudentPage() {
           return;
         }
         
-        const parsed: Quiz = await quizRes.json();
+        const parsed = await quizRes.json();
+        if (parsed.requires_code) {
+          setPhase("enter_code");
+          return;
+        }
+        
+        // Backward compatibility (if backend doesn't require code)
         setQuiz(parsed);
-        setUserAnswers(new Array(parsed.questions.length).fill(""));
+        setUserAnswers(new Array(parsed.questions?.length || 0).fill(""));
 
         // 2. Check registration status
         const checkRes = await fetch(`${API_URL}/student/check`, {
@@ -229,6 +237,56 @@ export default function StudentPage() {
     }
   }, [timeLeft, phase, selectedAnswer, quiz, currentIndex]);
 
+  const handlePinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pinInput.trim()) return;
+    setPinError("");
+    setPhase("loading");
+    
+    try {
+      const token = localStorage.getItem("student_token");
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      
+      const quizRes = await fetch(`${API_URL}/active-quiz?code=${pinInput.trim()}`);
+      if (!quizRes.ok) {
+        if (quizRes.status === 403) setPinError("Invalid Game Pin");
+        else setPinError("No active quiz available");
+        setPhase("enter_code");
+        return;
+      }
+      
+      const parsed: Quiz = await quizRes.json();
+      setQuiz(parsed);
+      setUserAnswers(new Array(parsed.questions.length).fill(""));
+
+      const checkRes = await fetch(`${API_URL}/student/check`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      
+      if (checkRes.status === 401) {
+        localStorage.removeItem("student_token");
+        router.push("/student/login");
+        return;
+      }
+
+      if (checkRes.status === 403 || checkRes.status === 404) {
+        setPhase(checkRes.status === 403 ? "denied" : "waiting");
+      } else if (checkRes.ok) {
+        const data = await checkRes.json();
+        if (data.status === "completed") {
+          setPhase("denied");
+        } else {
+          setPhase("welcome");
+        }
+      } else {
+        setPhase("waiting");
+      }
+    } catch {
+      setPinError("Connection error");
+      setPhase("enter_code");
+    }
+  };
+
   const handleStartQuiz = () => {
     if (quiz) {
       setPhase("quiz");
@@ -326,6 +384,45 @@ export default function StudentPage() {
 
   // --- Render Active Quiz Phase ---
   const renderActiveQuiz = () => {
+    if (phase === "enter_code") {
+      return (
+        <div className="flex h-full flex-col items-center justify-center">
+          <motion.div
+            className="edu-card flex flex-col items-center gap-6 text-center max-w-md w-full"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="flex h-20 w-20 items-center justify-center rounded-full glass-pill text-4xl shadow-lg border border-[var(--glass-border)]">
+              🎮
+            </div>
+            <h2 className="text-2xl font-bold text-white tracking-tight">
+              Join a Session
+            </h2>
+            <p className="text-[var(--text-secondary)]">
+              Ask your teacher for the Game Pin to enter the quiz.
+            </p>
+            <form onSubmit={handlePinSubmit} className="w-full flex flex-col gap-4">
+              <input
+                type="text"
+                placeholder="Game Pin"
+                value={pinInput}
+                onChange={(e) => setPinInput(e.target.value)}
+                className={`w-full rounded-xl bg-[rgba(255,255,255,0.08)] px-4 py-4 text-center text-2xl font-mono text-white placeholder-[var(--text-muted)] border outline-none transition-all ${pinError ? 'border-[var(--accent-red)] focus:border-[var(--accent-red)] focus:ring-1 focus:ring-[var(--accent-red)]' : 'border-[rgba(255,255,255,0.15)] focus:border-white focus:ring-1 focus:ring-white'}`}
+                maxLength={6}
+                required
+              />
+              {pinError && <p className="text-[#f87171] text-sm font-semibold">{pinError}</p>}
+              <button
+                type="submit"
+                className="btn-primary w-full min-h-[52px]"
+              >
+                Enter
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      );
+    }
     if (phase === "waiting") {
       return (
         <div className="flex h-full flex-col items-center justify-center">

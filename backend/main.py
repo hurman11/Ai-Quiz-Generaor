@@ -3,6 +3,7 @@ import uuid
 import json
 from datetime import datetime, timedelta
 from typing import Optional
+import random
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
@@ -185,7 +186,7 @@ async def get_me(user_id: int = Depends(get_current_user)):
 
 # ─── QUIZ MANAGEMENT ENDPOINTS ───
 @app.get("/active-quiz")
-async def get_active_quiz():
+async def get_active_quiz(code: Optional[str] = None):
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT data, quiz_uuid FROM active_quiz WHERE id = 1")
@@ -193,12 +194,21 @@ async def get_active_quiz():
             if not row:
                 raise HTTPException(status_code=404, detail="No active quiz available")
             quiz_data = row["data"]
+            
+            if code is None:
+                return {"active": True, "requires_code": True}
+                
+            if quiz_data.get("quiz_code") and str(quiz_data.get("quiz_code")) != str(code):
+                raise HTTPException(status_code=403, detail="Invalid quiz code")
+                
             quiz_data["quiz_uuid"] = row["quiz_uuid"]
             return quiz_data
 
 @app.post("/active-quiz")
 async def set_active_quiz(quiz: dict):
     new_uuid = str(uuid.uuid4())
+    quiz_code = str(random.randint(100000, 999999))
+    quiz["quiz_code"] = quiz_code
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -209,7 +219,7 @@ async def set_active_quiz(quiz: dict):
                 """,
                 (json.dumps(quiz), new_uuid)
             )
-    return {"success": True, "quiz_uuid": new_uuid}
+    return {"success": True, "quiz_uuid": new_uuid, "quiz_code": quiz_code}
 
 @app.delete("/active-quiz")
 async def clear_active_quiz():

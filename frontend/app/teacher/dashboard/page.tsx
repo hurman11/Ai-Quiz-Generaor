@@ -274,6 +274,16 @@ export default function TeacherDashboardPage() {
                       </div>
                     </div>
 
+                    {/* Game Pin */}
+                    <div className="rounded-xl border border-[var(--glass-border)] bg-[rgba(255,255,255,0.05)] p-6 text-center shadow-lg">
+                      <p className="mb-2 text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-widest">
+                        Game Pin
+                      </p>
+                      <div className="text-6xl sm:text-7xl font-black text-white tracking-widest font-mono drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                        {activeQuiz.quiz_code || "------"}
+                      </div>
+                    </div>
+
                     {/* Shareable Link */}
                     <div className="rounded-lg border border-[var(--glass-border)] bg-[rgba(255,255,255,0.05)] p-4">
                       <p className="mb-2 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">

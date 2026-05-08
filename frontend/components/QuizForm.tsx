@@ -144,11 +144,15 @@ export default function QuizForm() {
       const quiz = await res.json();
 
       // Push to backend so students can access it
-      await fetch(`${API_URL}/active-quiz`, {
+      const pushRes = await fetch(`${API_URL}/active-quiz`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(quiz),
       });
+      
+      const pushData = await pushRes.json();
+      quiz.quiz_code = pushData.quiz_code;
+      quiz.quiz_uuid = pushData.quiz_uuid;
 
       // Save locally for teacher dashboard
       localStorage.setItem("active_quiz", JSON.stringify(quiz));
