@@ -175,7 +175,10 @@ export default function TeacherDashboardPage() {
 
   const handleHostLiveGame = async () => {
     if (!activeQuiz) return;
-    const updatedQuiz = { ...activeQuiz, live_state: { phase: "lobby", question_index: 0, start_time: Date.now() } };
+    const updatedQuiz: Quiz = { 
+      ...activeQuiz, 
+      live_state: { phase: "lobby", question_index: 0, start_time: Date.now() } 
+    };
     
     // Save locally
     setActiveQuiz(updatedQuiz);
