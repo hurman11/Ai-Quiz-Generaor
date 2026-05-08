@@ -52,7 +52,6 @@ export default function ScoreCard({
 }: ScoreCardProps) {
   const percentage = total > 0 ? (score / total) * 100 : 0;
   const animatedScore = useCountUp(score, 1500);
-  const submitted = useRef(false);
 
   // SVG circle math
   const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
@@ -61,8 +60,6 @@ export default function ScoreCard({
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
-
-  // Submit logic is now handled securely in the parent component via JWT
 
   // Performance message
   const getMessage = (): { text: string; emoji: string } => {
@@ -76,24 +73,24 @@ export default function ScoreCard({
 
   // Stroke color based on rating
   const getStrokeColor = (): string => {
-    if (percentage >= 90) return "var(--accent-cyan)";
-    if (percentage >= 70) return "#58a6ff";
-    if (percentage >= 50) return "var(--accent-amber)";
-    return "var(--text-secondary)";
+    if (percentage >= 90) return "rgba(34,211,238,1)";
+    if (percentage >= 70) return "rgba(96,165,250,1)";
+    if (percentage >= 50) return "rgba(251,191,36,1)";
+    return "rgba(255,255,255,0.6)";
   };
 
   const getBadgeColor = (): string => {
-    if (percentage >= 90) return "bg-[rgba(0,212,255,0.15)] text-[var(--accent-cyan)] border-[var(--accent-cyan)]";
-    if (percentage >= 70) return "bg-[rgba(88,166,255,0.15)] text-[#58a6ff] border-[#58a6ff]";
-    if (percentage >= 50) return "bg-[rgba(245,158,11,0.15)] text-[var(--accent-amber)] border-[var(--accent-amber)]";
-    return "bg-[rgba(139,148,158,0.15)] text-[var(--text-secondary)] border-[var(--border)]";
+    if (percentage >= 90) return "bg-[rgba(34,211,238,0.15)] text-[rgba(34,211,238,1)] border-[rgba(34,211,238,0.5)]";
+    if (percentage >= 70) return "bg-[rgba(96,165,250,0.15)] text-[rgba(96,165,250,1)] border-[rgba(96,165,250,0.5)]";
+    if (percentage >= 50) return "bg-[rgba(251,191,36,0.15)] text-[rgba(251,191,36,1)] border-[rgba(251,191,36,0.5)]";
+    return "bg-[rgba(255,255,255,0.1)] text-[rgba(255,255,255,0.8)] border-[rgba(255,255,255,0.3)]";
   };
 
   return (
-    <div className="edu-card w-full" style={{ padding: "clamp(20px, 4vw, 32px)", margin: "0 auto" }}>
+    <div className="edu-card w-full max-w-[520px]" style={{ padding: "clamp(20px, 4vw, 32px)", margin: "0 auto", backdropFilter: "blur(32px) saturate(180%)" }}>
       <div className="flex flex-col items-center gap-6">
         {/* ── Title ── */}
-        <h2 className="font-heading text-xl font-bold text-white">
+        <h2 className="text-xl font-bold text-white tracking-tight">
           Quiz Results
         </h2>
 
@@ -111,7 +108,7 @@ export default function ScoreCard({
               cy={size / 2}
               r={radius}
               fill="none"
-              stroke="var(--bg-elevated)"
+              stroke="rgba(255,255,255,0.1)"
               strokeWidth={strokeWidth}
             />
             {/* Progress ring */}
@@ -126,16 +123,16 @@ export default function ScoreCard({
               strokeDasharray={circumference}
               initial={{ strokeDashoffset: circumference }}
               animate={{ strokeDashoffset: offset }}
-              transition={{ duration: 1.5, ease: "easeOut" }}
+              transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
             />
           </svg>
           {/* Score overlay */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-heading font-bold text-white" style={{ fontSize: "clamp(1.8rem, 6vw, 2.5rem)" }}>
+            <span className="font-bold text-white" style={{ fontSize: "clamp(1.8rem, 6vw, 2.8rem)", letterSpacing: "-0.04em" }}>
               {animatedScore}
-              <span className="text-lg text-text-secondary font-normal"> / {total}</span>
+              <span className="text-lg text-white/60 font-normal"> / {total}</span>
             </span>
-            <span className="text-sm text-text-secondary mt-[-4px]">
+            <span className="text-sm text-white/60 mt-[-4px]">
               {Math.round(percentage)}%
             </span>
           </div>
@@ -153,34 +150,32 @@ export default function ScoreCard({
 
         {/* ── Answer Review ── */}
         <div className="w-full mt-4">
-          <h3 className="mb-3 text-sm font-semibold text-text-secondary uppercase tracking-wider">
+          <h3 className="mb-3 text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
             Answer Review
           </h3>
           <div className="max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
             <div className="flex flex-col gap-2">
               {questions.map((q, idx) => {
                 const isCorrect = userAnswers[idx] === q.correct;
-                // Alternating bg
-                const bgClass = idx % 2 === 0 ? "bg-[var(--bg-elevated)]" : "bg-[var(--bg-card)]";
                 
                 return (
                   <div
                     key={q.id}
-                    className={`flex items-start gap-3 rounded-lg border border-[var(--border)] p-3 ${bgClass}`}
+                    className="flex items-start gap-3 rounded-xl border border-[rgba(255,255,255,0.08)] p-3 bg-transparent hover:bg-[rgba(255,255,255,0.05)] transition-colors"
                   >
                     <span
                       className={`mt-0.5 text-sm font-bold flex-shrink-0 ${
-                        isCorrect ? "text-[var(--accent-green)]" : "text-[var(--accent-red)]"
+                        isCorrect ? "text-[#34d399]" : "text-[#f87171]"
                       }`}
                     >
                       {isCorrect ? "✓" : "✗"}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[0.8rem] sm:text-sm text-white/90 leading-snug">
+                      <p className="text-[0.8rem] sm:text-sm text-white leading-snug">
                         {q.question}
                       </p>
                       {!isCorrect && (
-                        <p className="mt-1.5 text-[0.75rem] sm:text-xs text-[var(--accent-cyan)]">
+                        <p className="mt-1.5 text-[0.75rem] sm:text-xs text-[#22d3ee]">
                           <span className="font-semibold">Correct: {q.correct}</span> —{" "}
                           {q.options[q.correct as keyof typeof q.options]}
                         </p>

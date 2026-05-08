@@ -305,9 +305,9 @@ export default function StudentPage() {
 
   // Timer SVG logic
   const getTimerColor = (): string => {
-    if (timeLeft > 15) return "text-[var(--accent-green)]";
-    if (timeLeft > 5) return "text-[var(--accent-amber)]";
-    return "text-[var(--accent-red)]";
+    if (timeLeft > 15) return "text-[#34d399]";
+    if (timeLeft > 5) return "text-[#fbbf24]";
+    return "text-[#f87171]";
   };
   const timerSize = 48;
   const timerStroke = 4;
@@ -315,13 +315,13 @@ export default function StudentPage() {
   const timerCircumference = 2 * Math.PI * timerRadius;
   const timerOffset = timerCircumference - (timeLeft / TIMER_SECONDS) * timerCircumference;
   const getTimerStrokeColor = (): string => {
-    if (timeLeft > 15) return "var(--accent-green)";
-    if (timeLeft > 5) return "var(--accent-amber)";
-    return "var(--accent-red)";
+    if (timeLeft > 15) return "#34d399";
+    if (timeLeft > 5) return "#fbbf24";
+    return "#f87171";
   };
 
   if (phase === "loading") {
-    return <main className="min-h-screen bg-bg-base" />;
+    return <main className="min-h-screen bg-transparent" />;
   }
 
   // --- Render Active Quiz Phase ---
@@ -330,14 +330,18 @@ export default function StudentPage() {
       return (
         <div className="flex h-full flex-col items-center justify-center">
           <motion.div
-            className="flex flex-col items-center gap-6 text-center max-w-md w-full"
+            className="edu-card flex flex-col items-center gap-6 text-center max-w-md w-full"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[var(--bg-elevated)] text-[var(--text-muted)] text-4xl border border-[var(--border)]">
+            <motion.div 
+              className="flex h-20 w-20 items-center justify-center rounded-full glass-pill text-[var(--text-muted)] text-4xl"
+              animate={{ scale: [1, 1.06, 1] }}
+              transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+            >
               ⏳
-            </div>
-            <h2 className="font-heading text-2xl font-bold text-white">
+            </motion.div>
+            <h2 className="text-2xl font-bold text-white">
               No Quiz Active
             </h2>
             <p className="text-[var(--text-secondary)]">
@@ -358,14 +362,15 @@ export default function StudentPage() {
       return (
         <div className="flex h-full flex-col items-center justify-center">
           <motion.div
-            className="edu-card-solid flex flex-col items-center gap-6 text-center max-w-md w-full"
+            className="edu-card flex flex-col items-center gap-6 text-center max-w-md w-full"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
+            style={{ borderTop: "4px solid rgba(248,113,113,0.8)" }}
           >
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[rgba(239,68,68,0.15)] text-[var(--accent-red)] text-4xl border border-[var(--accent-red)]">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[rgba(239,68,68,0.15)] text-[#f87171] text-4xl border border-[rgba(248,113,113,0.5)]">
               ⛔
             </div>
-            <h2 className="font-heading text-2xl font-bold text-white">
+            <h2 className="text-2xl font-bold text-white">
               Access Denied
             </h2>
             <p className="text-[var(--text-secondary)]">
@@ -390,20 +395,20 @@ export default function StudentPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="edu-card-solid flex flex-col items-center gap-6 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(16,185,129,0.15)] border border-[var(--accent-green)] text-3xl">
-                🎯
+            <div className="edu-card flex flex-col items-center gap-6 text-center" style={{ backdropFilter: "blur(40px) saturate(200%)" }}>
+              <div className="inline-flex glass-pill px-4 py-1.5 text-xs font-bold text-white mb-2 uppercase tracking-wider">
+                {quiz.title}
               </div>
               <div>
-                <h2 className="font-heading text-2xl font-bold text-white">
-                  {quiz.title}
+                <h2 className="text-2xl font-bold text-white">
+                  Ready to start?
                 </h2>
                 <p className="mt-2 text-sm text-[var(--text-secondary)]">
                   {quiz.questions.length} questions · {TIMER_SECONDS}s per
                   question
                 </p>
               </div>
-              <div className="flex items-center gap-2 rounded-lg bg-[rgba(245,158,11,0.1)] border border-[var(--accent-amber)] px-4 py-3 text-sm text-[var(--accent-amber)] w-full text-left">
+              <div className="flex items-center gap-2 rounded-lg bg-[rgba(251,191,36,0.1)] border border-[rgba(251,191,36,0.5)] px-4 py-3 text-sm text-[rgba(251,191,36,1)] w-full text-left">
                 <span className="text-xl">⏱️</span>
                 <span>
                   You have <strong>{TIMER_SECONDS} seconds</strong> per question. Unanswered questions will be skipped automatically.
@@ -414,7 +419,7 @@ export default function StudentPage() {
                 onClick={handleStartQuiz}
                 className="btn-primary w-full min-h-[52px]"
               >
-                Start Quiz →
+                Start Quiz
               </button>
             </div>
           </motion.div>
@@ -456,7 +461,7 @@ export default function StudentPage() {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <h1 className="font-heading text-lg font-bold text-white truncate max-w-full sm:max-w-[70%]">
+              <h1 className="text-lg font-bold text-white truncate max-w-full sm:max-w-[70%]">
                 {quiz.title}
               </h1>
               <span className="text-sm text-[var(--text-secondary)] truncate">
@@ -477,7 +482,7 @@ export default function StudentPage() {
                     cy={timerSize / 2}
                     r={timerRadius}
                     fill="none"
-                    stroke="var(--bg-elevated)"
+                    stroke="rgba(255,255,255,0.1)"
                     strokeWidth={timerStroke}
                   />
                   <circle
@@ -514,7 +519,7 @@ export default function StudentPage() {
             <AnimatePresence>
               {timeLeft === 0 && selectedAnswer === null && (
                 <motion.div
-                  className="mb-4 flex items-center gap-2 rounded-lg border border-[var(--accent-red)] bg-[rgba(239,68,68,0.1)] px-4 py-3 text-sm font-medium text-[var(--accent-red)]"
+                  className="mb-4 flex items-center gap-2 rounded-lg border border-[rgba(248,113,113,0.5)] bg-[rgba(248,113,113,0.15)] px-4 py-3 text-sm font-medium text-[#f87171]"
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
@@ -555,8 +560,8 @@ export default function StudentPage() {
                   className="btn-primary w-full sm:w-auto px-8 min-h-[52px]"
                 >
                   {currentIndex + 1 >= totalQuestions
-                    ? "Finish Quiz →"
-                    : "Next Question →"}
+                    ? "Finish Quiz"
+                    : "Next Question"}
                 </button>
               </motion.div>
             )}
@@ -573,29 +578,29 @@ export default function StudentPage() {
         
         {historyLoading ? (
           <div className="flex items-center justify-center p-12">
-            <svg className="h-8 w-8 animate-spin text-accent-blue" viewBox="0 0 24 24" fill="none">
+            <svg className="h-8 w-8 animate-spin text-white" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
               <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
             </svg>
           </div>
         ) : history.length === 0 ? (
-          <div className="edu-card-solid text-center py-12">
+          <div className="edu-card text-center py-12">
             <span className="text-4xl block mb-4">📭</span>
             <h3 className="text-lg font-medium text-white">No history yet</h3>
             <p className="text-[var(--text-secondary)] mt-2">Take your first quiz to see your results here.</p>
           </div>
         ) : (
-          <div className="edu-card-solid overflow-hidden !p-0">
+          <div className="edu-card overflow-hidden !p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-[var(--text-secondary)]">
-                <thead className="bg-[var(--bg-base)] text-xs uppercase text-[var(--text-muted)]">
+                <thead className="bg-[rgba(255,255,255,0.05)] border-b border-[rgba(255,255,255,0.1)] text-xs uppercase tracking-wider text-[var(--text-muted)]">
                   <tr>
-                    <th className="px-6 py-4 font-semibold">Quiz Title / ID</th>
+                    <th className="px-6 py-4 font-semibold">Quiz ID</th>
                     <th className="px-6 py-4 font-semibold text-center">Score</th>
                     <th className="px-6 py-4 font-semibold text-right">Date Completed</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--border)]">
+                <tbody className="divide-y divide-[rgba(255,255,255,0.08)]">
                   {history.map((r, i) => {
                     const pct = Math.round((r.score / r.total) * 100);
                     return (
@@ -604,17 +609,17 @@ export default function StudentPage() {
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
-                        className="hover:bg-[var(--bg-base)] transition-colors"
+                        className="hover:bg-[rgba(255,255,255,0.05)] transition-colors"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="font-medium text-white">Past Quiz</span>
-                          <span className="block text-xs opacity-60 font-mono mt-1">{r.quiz_uuid.split('-')[0]}...</span>
+                          <span className="block text-xs text-[var(--text-muted)] font-mono mt-1">{r.quiz_uuid.split('-')[0]}...</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <span className={`inline-flex items-center justify-center rounded-full px-3 py-1 font-bold ${
-                            pct >= 80 ? "bg-accent-green/10 text-accent-green" :
-                            pct >= 60 ? "bg-accent-amber/10 text-accent-amber" :
-                            "bg-accent-red/10 text-accent-red"
+                            pct >= 80 ? "bg-[rgba(52,211,153,0.15)] text-[#34d399]" :
+                            pct >= 60 ? "bg-[rgba(251,191,36,0.15)] text-[#fbbf24]" :
+                            "bg-[rgba(248,113,113,0.15)] text-[#f87171]"
                           }`}>
                             {r.score} / {r.total} ({pct}%)
                           </span>
@@ -641,22 +646,22 @@ export default function StudentPage() {
         
         {leaderboardLoading ? (
           <div className="flex items-center justify-center p-12">
-            <svg className="h-8 w-8 animate-spin text-accent-cyan" viewBox="0 0 24 24" fill="none">
+            <svg className="h-8 w-8 animate-spin text-white" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
               <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-75" />
             </svg>
           </div>
         ) : leaderboard.length === 0 ? (
-          <div className="edu-card-solid text-center py-12">
+          <div className="edu-card text-center py-12">
             <span className="text-4xl block mb-4">🏆</span>
             <h3 className="text-lg font-medium text-white">No results yet</h3>
             <p className="text-[var(--text-secondary)] mt-2">Be the first to complete the quiz!</p>
           </div>
         ) : (
-          <div className="edu-card-solid overflow-hidden !p-0">
+          <div className="edu-card overflow-hidden !p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-[var(--text-secondary)]">
-                <thead className="bg-[var(--bg-base)] text-xs uppercase text-[var(--text-muted)]">
+                <thead className="bg-[rgba(255,255,255,0.05)] border-b border-[rgba(255,255,255,0.1)] text-xs uppercase tracking-wider text-[var(--text-muted)]">
                   <tr>
                     <th className="px-6 py-4 font-semibold text-center">Rank</th>
                     <th className="px-6 py-4 font-semibold">Student</th>
@@ -665,13 +670,13 @@ export default function StudentPage() {
                     <th className="px-6 py-4 font-semibold text-center">Badges</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--border)]">
+                <tbody className="divide-y divide-[rgba(255,255,255,0.08)]">
                   {leaderboard.map((r, i) => {
                     const pct = Math.round((r.score / r.total) * 100);
                     const badges = [];
-                    if (pct === 100) badges.push({ icon: "🌟", label: "Perfect Score", color: "var(--accent-amber)" });
-                    if (i === 0) badges.push({ icon: "🥇", label: "1st Place", color: "var(--accent-cyan)" });
-                    if (r.time_taken && r.time_taken < 15) badges.push({ icon: "⚡", label: "Speed Demon", color: "var(--accent-green)" });
+                    if (pct === 100) badges.push({ icon: "🌟", label: "Perfect Score" });
+                    if (i === 0) badges.push({ icon: "🥇", label: "1st Place" });
+                    if (r.time_taken && r.time_taken < 15) badges.push({ icon: "⚡", label: "Speed Demon" });
 
                     return (
                       <motion.tr 
@@ -679,21 +684,21 @@ export default function StudentPage() {
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
-                        className={`hover:bg-[var(--bg-base)] transition-colors ${r.student_name === studentName ? "bg-[rgba(0,212,255,0.05)] border-l-4 border-l-[var(--accent-cyan)]" : ""}`}
+                        className={`hover:bg-[rgba(255,255,255,0.05)] transition-colors ${r.student_name === studentName ? "bg-[rgba(255,255,255,0.1)] border-l-4 border-l-white" : ""}`}
                       >
                         <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-white text-lg">
                           #{i + 1}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`font-bold ${r.student_name === studentName ? "text-[var(--accent-cyan)]" : "text-white"}`}>
+                          <span className={`font-bold ${r.student_name === studentName ? "text-white" : "text-[var(--text-secondary)]"}`}>
                             {r.student_name} {r.student_name === studentName && "(You)"}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <span className={`inline-flex items-center justify-center rounded-full px-3 py-1 font-bold ${
-                            pct >= 80 ? "bg-accent-green/10 text-accent-green" :
-                            pct >= 60 ? "bg-accent-amber/10 text-accent-amber" :
-                            "bg-accent-red/10 text-accent-red"
+                            pct >= 80 ? "bg-[rgba(52,211,153,0.15)] text-[#34d399]" :
+                            pct >= 60 ? "bg-[rgba(251,191,36,0.15)] text-[#fbbf24]" :
+                            "bg-[rgba(248,113,113,0.15)] text-[#f87171]"
                           }`}>
                             {r.score} / {r.total}
                           </span>
@@ -703,7 +708,7 @@ export default function StudentPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap flex items-center justify-center gap-1 text-xl">
                           {badges.map((b, idx) => (
-                            <span key={idx} title={b.label} className="drop-shadow-md cursor-help">
+                            <span key={idx} title={b.label} className="cursor-help drop-shadow-md">
                               {b.icon}
                             </span>
                           ))}
@@ -721,20 +726,20 @@ export default function StudentPage() {
   };
 
   return (
-    <div className="flex h-screen bg-bg-dark text-text-primary overflow-hidden">
+    <div className="flex h-screen bg-transparent overflow-hidden">
       {/* ── Sidebar ── */}
       <motion.div
-        className="w-64 flex-shrink-0 flex flex-col border-r border-border bg-bg-elevated hidden md:flex"
+        className="glass-sidebar w-64 flex-shrink-0 flex flex-col hidden md:flex z-50"
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
+        transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
         <div className="p-6">
           <div className="flex items-center gap-3">
-            <span className="text-2xl animate-pulse">⚡</span>
+            <span className="text-2xl">⚡</span>
             <div>
-              <h1 className="text-xl font-bold tracking-wider uppercase font-heading text-transparent bg-clip-text bg-[var(--gradient-brand)] drop-shadow-[0_0_10px_rgba(124,58,237,0.5)]">Nexus</h1>
-              <p className="text-xs text-accent-green font-medium mt-1">Student Dashboard</p>
+              <h1 className="text-xl font-bold tracking-tight text-white uppercase">Nexus</h1>
+              <p className="text-xs text-white/70 font-medium mt-1">Student Dashboard</p>
             </div>
           </div>
         </div>
@@ -746,10 +751,10 @@ export default function StudentPage() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? "bg-accent-blue/10 text-accent-blue"
-                    : "text-text-secondary hover:bg-bg-base hover:text-text-primary"
+                    ? "border border-[var(--glass-border-bright)] bg-[rgba(255,255,255,0.18)] text-white shadow-[0_2px_10px_rgba(0,0,0,0.1)]"
+                    : "border border-transparent text-[var(--text-secondary)] hover:bg-[rgba(255,255,255,0.08)] hover:text-white"
                 }`}
               >
                 <span className="text-lg">{tab.icon}</span>
@@ -759,10 +764,10 @@ export default function StudentPage() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-[rgba(255,255,255,0.12)]">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-text-secondary hover:text-accent-red hover:bg-accent-red/10 transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[#f87171] hover:bg-[rgba(248,113,113,0.1)] transition-colors"
           >
             <span className="text-lg">🚪</span>
             Log Out
@@ -773,23 +778,23 @@ export default function StudentPage() {
       {/* ── Main Content Area ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Mobile Header */}
-        <header className="md:hidden h-16 border-b border-border bg-bg-dark/50 backdrop-blur-md flex items-center justify-between px-4 z-10 shrink-0">
+        <header className="md:hidden h-16 border-b border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.12)] backdrop-blur-[40px] flex items-center justify-between px-4 z-10 shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-xl">🎓</span>
-            <h1 className="font-bold text-text-primary">Student</h1>
+            <h1 className="font-bold text-white tracking-tight">Student</h1>
           </div>
           <div className="flex gap-2">
-            <button onClick={handleLogout} className="text-xs text-accent-red px-2">Logout</button>
+            <button onClick={handleLogout} className="text-xs text-[#f87171] font-semibold px-2">Logout</button>
           </div>
         </header>
 
         {/* Dynamic Welcome Animation */}
         <div className="absolute top-4 right-6 md:top-6 md:right-8 z-20 pointer-events-none hidden md:block">
           <motion.div
-            initial={{ opacity: 0, scale: 1.5, x: "-40vw", y: "40vh" }}
+            initial={{ opacity: 0, scale: 1.1, x: "-40vw", y: "40vh" }}
             animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
             transition={{ duration: 1.2, delay: 0.2, type: "spring", stiffness: 60 }}
-            className="bg-bg-elevated/80 backdrop-blur-md border border-border px-4 py-2 rounded-full shadow-lg flex items-center gap-2"
+            className="glass-pill px-4 py-2 shadow-lg flex items-center gap-2 border-[var(--glass-border)]"
           >
             <span className="text-lg">👋</span>
             <span className="text-sm font-semibold text-white">Hi, {studentName}</span>
@@ -804,15 +809,15 @@ export default function StudentPage() {
       </div>
 
       {/* ── Mobile Bottom Tab Bar ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] pb-[env(safe-area-inset-bottom)] border-t border-[var(--border)] bg-bg-dark md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] pb-[env(safe-area-inset-bottom)] border-t border-[rgba(255,255,255,0.12)] bg-[rgba(0,0,0,0.3)] backdrop-blur-[40px] md:hidden">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`flex flex-1 flex-col items-center justify-center gap-1 transition-colors ${
               activeTab === tab.key
-                ? "text-[var(--accent-cyan)]"
-                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
+                : "text-[var(--text-muted)] hover:text-white"
             }`}
           >
             <span className="text-xl leading-none">{tab.icon}</span>

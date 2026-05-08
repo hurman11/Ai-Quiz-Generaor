@@ -74,7 +74,7 @@ export default function TeacherDashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === "results") {
+    if (activeTab === "results" || activeTab === "analytics") {
       fetchResults();
       const interval = setInterval(fetchResults, 5000);
       return () => clearInterval(interval);
@@ -211,22 +211,22 @@ export default function TeacherDashboardPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col pb-[64px] md:pb-0">
+    <div className="flex min-h-screen flex-col pb-[64px] md:pb-0 bg-transparent">
       {/* ── Top Navbar ── */}
       <header className="glass-nav sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 py-3">
         <div className="flex items-center gap-3">
-          <span className="text-xl animate-pulse">⚡</span>
-          <span className="font-bold text-white text-lg tracking-wider uppercase font-heading text-transparent bg-clip-text bg-[var(--gradient-brand)] drop-shadow-[0_0_10px_rgba(124,58,237,0.5)]">
+          <span className="text-xl">⚡</span>
+          <span className="font-bold text-white text-lg tracking-wider uppercase">
             Nexus
           </span>
-          <span className="hidden sm:inline-block rounded-full bg-[rgba(0,212,255,0.15)] px-3 py-0.5 text-xs font-semibold text-[var(--accent-cyan)] border border-[var(--border-glow)]">
+          <span className="hidden sm:inline-block rounded-full bg-[rgba(255,255,255,0.15)] px-3 py-0.5 text-xs font-semibold text-white border border-[var(--glass-border)]">
             Teacher Dashboard
           </span>
         </div>
         <button
           id="logout-btn"
           onClick={handleLogout}
-          className="btn-outline px-4 py-2 text-sm min-h-[40px]"
+          className="btn-outline px-4 py-2 text-sm min-h-[40px] hover:text-[#f87171] hover:border-[#f87171]"
         >
           Logout
         </button>
@@ -242,10 +242,10 @@ export default function TeacherDashboardPage() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? "border-l-[3px] border-[var(--accent-cyan)] bg-[rgba(0,212,255,0.08)] text-white"
-                      : "border-l-[3px] border-transparent text-[var(--text-sidebar)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--text-body)]"
+                      ? "border border-[var(--glass-border-bright)] bg-[rgba(255,255,255,0.18)] text-white shadow-[0_2px_10px_rgba(0,0,0,0.1)]"
+                      : "border border-transparent text-[var(--text-secondary)] hover:bg-[rgba(255,255,255,0.08)] hover:text-white"
                   }`}
                 >
                   <span className="text-lg">{tab.icon}</span>
@@ -257,7 +257,7 @@ export default function TeacherDashboardPage() {
         </aside>
 
         {/* ── Main Content ── */}
-        <main className="flex-1 w-full overflow-y-auto page-container">
+        <main className="flex-1 w-full overflow-y-auto page-container bg-transparent">
           <AnimatePresence mode="wait">
             {/* ─── Generate Quiz Tab ─── */}
             {activeTab === "generate" && (
@@ -269,9 +269,9 @@ export default function TeacherDashboardPage() {
                 transition={{ duration: 0.3 }}
                 className="mx-auto max-w-2xl"
               >
-                <h2 className="mb-6 font-heading text-2xl font-bold text-white">
-                  Generate a New Quiz
-                </h2>
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-[rgba(255,255,255,0.1)]">
+                  <h2 className="text-2xl font-bold text-white">Generate a New Quiz</h2>
+                </div>
                 <div className="edu-card">
                   <QuizForm />
                 </div>
@@ -288,15 +288,15 @@ export default function TeacherDashboardPage() {
                 transition={{ duration: 0.3 }}
                 className="mx-auto max-w-2xl"
               >
-                <h2 className="mb-6 font-heading text-2xl font-bold text-white">
-                  Active Quiz
-                </h2>
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-[rgba(255,255,255,0.1)]">
+                  <h2 className="text-2xl font-bold text-white">Active Quiz</h2>
+                </div>
 
                 {activeQuiz ? (
                   <div className="edu-card flex flex-col gap-6">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                       <div>
-                        <h3 className="font-heading text-xl font-bold text-white">
+                        <h3 className="text-xl font-bold text-white">
                           {activeQuiz.title}
                         </h3>
                         <p className="mt-1 text-sm text-[var(--text-secondary)]">
@@ -305,20 +305,20 @@ export default function TeacherDashboardPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="relative flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-cyan)] opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--accent-cyan)] shadow-[0_0_8px_var(--accent-cyan)]"></span>
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-green)] opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--accent-green)] shadow-[0_0_8px_var(--accent-green)]"></span>
                         </span>
-                        <span className="text-xs font-semibold text-[var(--accent-cyan)]">LIVE</span>
+                        <span className="text-xs font-semibold text-[var(--accent-green)]">LIVE</span>
                       </div>
                     </div>
 
                     {/* Shareable Link */}
-                    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
+                    <div className="rounded-lg border border-[var(--glass-border)] bg-[rgba(255,255,255,0.05)] p-4">
                       <p className="mb-2 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                         Student Link
                       </p>
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        <code className="flex-1 rounded-md bg-[var(--bg-navbar)] border border-[var(--border)] px-3 py-2 text-sm text-[var(--text-body)] break-all">
+                        <code className="flex-1 rounded-md bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.1)] px-3 py-2 text-sm text-[var(--text-body)] break-all text-white font-mono">
                           {studentLink}
                         </code>
                         <button
@@ -338,7 +338,7 @@ export default function TeacherDashboardPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="edu-card flex flex-col items-center gap-4 py-12 text-center border-dashed">
+                  <div className="edu-card flex flex-col items-center gap-4 py-12 text-center" style={{ borderStyle: 'dashed' }}>
                     <span className="text-5xl opacity-80">📭</span>
                     <p className="text-[var(--text-secondary)]">
                       No quiz is currently active
@@ -364,14 +364,14 @@ export default function TeacherDashboardPage() {
                 transition={{ duration: 0.3 }}
                 className="mx-auto max-w-4xl"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-                  <h2 className="font-heading text-2xl font-bold text-white">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-4 border-b border-[rgba(255,255,255,0.1)] gap-4">
+                  <h2 className="text-2xl font-bold text-white">
                     Student Results
                   </h2>
                   <button
                     onClick={exportToExcel}
                     disabled={results.length === 0}
-                    className="btn-outline border-[var(--accent-green)] text-[var(--accent-green)] hover:bg-[rgba(16,185,129,0.1)] hover:border-[var(--accent-green)] hover:text-[#6ee7b7] disabled:opacity-50 disabled:border-[var(--border)] disabled:text-[var(--text-secondary)] w-full sm:w-auto"
+                    className="btn-success disabled:opacity-50 disabled:bg-[rgba(255,255,255,0.05)] disabled:border-[var(--glass-border)] disabled:text-[var(--text-secondary)] w-full sm:w-auto text-sm"
                   >
                     ⬇ Export to Excel
                   </button>
@@ -381,28 +381,28 @@ export default function TeacherDashboardPage() {
                 <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="edu-card p-4 flex flex-col items-center justify-center text-center">
                     <span className="text-3xl font-bold text-white">{registeredCount}</span>
-                    <span className="text-xs text-[var(--text-secondary)] mt-1 uppercase tracking-wider font-semibold">Registered Students</span>
+                    <span className="text-xs text-[var(--text-secondary)] mt-1 uppercase tracking-wider font-semibold">Registered</span>
                   </div>
                   <div className="edu-card p-4 flex flex-col items-center justify-center text-center">
-                    <span className="text-3xl font-bold text-[var(--accent-cyan)]">{results.length}</span>
-                    <span className="text-xs text-[var(--text-secondary)] mt-1 uppercase tracking-wider font-semibold">Total Attempts</span>
+                    <span className="text-3xl font-bold text-white">{results.length}</span>
+                    <span className="text-xs text-[var(--text-secondary)] mt-1 uppercase tracking-wider font-semibold">Attempts</span>
                   </div>
                   <div className="edu-card p-4 flex flex-col items-center justify-center text-center">
-                    <span className="text-3xl font-bold text-[var(--accent-green)]">{averageScore}%</span>
-                    <span className="text-xs text-[var(--text-secondary)] mt-1 uppercase tracking-wider font-semibold">Average Score</span>
+                    <span className="text-3xl font-bold text-white">{averageScore}%</span>
+                    <span className="text-xs text-[var(--text-secondary)] mt-1 uppercase tracking-wider font-semibold">Avg Score</span>
                   </div>
                   <div className="edu-card p-4 flex flex-col items-center justify-center text-center">
-                    <span className="text-3xl font-bold text-[var(--accent-purple)]">{completionRate}%</span>
-                    <span className="text-xs text-[var(--text-secondary)] mt-1 uppercase tracking-wider font-semibold">Completion Rate</span>
+                    <span className="text-3xl font-bold text-white">{completionRate}%</span>
+                    <span className="text-xs text-[var(--text-secondary)] mt-1 uppercase tracking-wider font-semibold">Completion</span>
                   </div>
                 </div>
 
                 {results.length > 0 ? (
-                  <div className="edu-card overflow-hidden p-0">
+                  <div className="edu-card overflow-hidden p-0 bg-[rgba(255,255,255,0.05)] border-[var(--glass-border)]">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-sm whitespace-nowrap">
                         <thead>
-                          <tr className="border-b border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text-secondary)] uppercase text-xs tracking-wider">
+                          <tr className="border-b border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.08)] text-[var(--text-secondary)] uppercase text-xs tracking-wider">
                             <th className="px-5 py-4 font-semibold">Student</th>
                             <th className="px-5 py-4 font-semibold text-center sm:text-left">Score</th>
                             <th className="px-5 py-4 font-semibold text-center sm:text-left">Percentage</th>
@@ -415,9 +415,9 @@ export default function TeacherDashboardPage() {
                             return (
                               <tr
                                 key={idx}
-                                className="border-b border-[var(--border-subtle)] last:border-0 hover:bg-[var(--bg-elevated)] transition-colors"
+                                className="border-b border-[rgba(255,255,255,0.06)] last:border-0 hover:bg-[rgba(255,255,255,0.05)] transition-colors"
                               >
-                                <td className="px-5 py-4 font-medium text-[var(--text-body)]">
+                                <td className="px-5 py-4 font-medium text-white">
                                   {r.student_name}
                                 </td>
                                 <td className="px-5 py-4 text-[var(--text-secondary)] text-center sm:text-left">
@@ -427,10 +427,10 @@ export default function TeacherDashboardPage() {
                                   <span
                                     className={`inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
                                       Number(pct) >= 70
-                                        ? "bg-[rgba(16,185,129,0.1)] text-[#6ee7b7] border-[var(--accent-green)]"
+                                        ? "bg-[var(--glass-green)] text-white border-[var(--border-green)]"
                                         : Number(pct) >= 50
-                                        ? "bg-[rgba(245,158,11,0.1)] text-[#fcd34d] border-[var(--accent-amber)]"
-                                        : "bg-[rgba(239,68,68,0.1)] text-[#fca5a5] border-[var(--accent-red)]"
+                                        ? "bg-[var(--glass-amber)] text-white border-[var(--border-amber)]"
+                                        : "bg-[var(--glass-red)] text-white border-[var(--border-red)]"
                                     }`}
                                   >
                                     {pct}%
@@ -447,7 +447,7 @@ export default function TeacherDashboardPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="edu-card flex flex-col items-center gap-4 py-12 text-center border-dashed">
+                  <div className="edu-card flex flex-col items-center gap-4 py-12 text-center" style={{ borderStyle: 'dashed' }}>
                     <span className="text-5xl opacity-80">⏳</span>
                     <p className="text-[var(--text-secondary)]">
                       Waiting for students to complete the quiz...
@@ -467,14 +467,12 @@ export default function TeacherDashboardPage() {
                 transition={{ duration: 0.3 }}
                 className="mx-auto max-w-5xl"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-                  <h2 className="font-heading text-2xl font-bold text-white">
-                    Classroom Analytics
-                  </h2>
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-[rgba(255,255,255,0.1)]">
+                  <h2 className="text-2xl font-bold text-white">Classroom Analytics</h2>
                 </div>
                 
                 {results.length === 0 ? (
-                  <div className="edu-card flex flex-col items-center gap-4 py-12 text-center border-dashed">
+                  <div className="edu-card flex flex-col items-center gap-4 py-12 text-center" style={{ borderStyle: 'dashed' }}>
                     <span className="text-5xl opacity-80">📊</span>
                     <p className="text-[var(--text-secondary)]">
                       Analytics will appear here once students complete the quiz.
@@ -484,17 +482,17 @@ export default function TeacherDashboardPage() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Question Insights Chart */}
                     <div className="edu-card p-6 flex flex-col">
-                      <h3 className="font-heading text-lg font-bold text-white mb-2">Question Insights</h3>
+                      <h3 className="text-lg font-bold text-white mb-2">Question Insights</h3>
                       <p className="text-sm text-[var(--text-secondary)] mb-6">Percentage of students who answered correctly vs incorrectly.</p>
                       <div className="h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={questionAnalytics} margin={{ top: 5, right: 0, left: -20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                            <XAxis dataKey="name" stroke="#888" tick={{ fill: '#888' }} />
-                            <YAxis stroke="#888" tick={{ fill: '#888' }} />
-                            <RechartsTooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border)', borderRadius: '8px' }} />
-                            <Bar dataKey="correctPercent" name="Correct %" stackId="a" fill="#10b981" radius={[0, 0, 4, 4]} />
-                            <Bar dataKey="wrongPercent" name="Wrong %" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+                            <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" tick={{ fill: 'rgba(255,255,255,0.5)' }} />
+                            <YAxis stroke="rgba(255,255,255,0.5)" tick={{ fill: 'rgba(255,255,255,0.5)' }} />
+                            <RechartsTooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', borderColor: 'rgba(255,255,255,0.2)', borderRadius: '12px', backdropFilter: 'blur(10px)' }} />
+                            <Bar dataKey="correctPercent" name="Correct %" stackId="a" fill="#34d399" radius={[0, 0, 4, 4]} />
+                            <Bar dataKey="wrongPercent" name="Wrong %" stackId="a" fill="#f87171" radius={[4, 4, 0, 0]} />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
@@ -502,16 +500,16 @@ export default function TeacherDashboardPage() {
 
                     {/* Time to Completion Chart */}
                     <div className="edu-card p-6 flex flex-col">
-                      <h3 className="font-heading text-lg font-bold text-white mb-2">Time-to-Completion</h3>
+                      <h3 className="text-lg font-bold text-white mb-2">Time-to-Completion</h3>
                       <p className="text-sm text-[var(--text-secondary)] mb-6">How long each student took to finish the quiz (in seconds).</p>
                       <div className="h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={timeAnalytics} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                            <XAxis dataKey="name" stroke="#888" tick={{ fill: '#888' }} />
-                            <YAxis stroke="#888" tick={{ fill: '#888' }} />
-                            <RechartsTooltip contentStyle={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border)', borderRadius: '8px' }} />
-                            <Line type="monotone" dataKey="time" name="Seconds" stroke="var(--accent-cyan)" strokeWidth={3} dot={{ r: 4, fill: "var(--accent-cyan)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+                            <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" tick={{ fill: 'rgba(255,255,255,0.5)' }} />
+                            <YAxis stroke="rgba(255,255,255,0.5)" tick={{ fill: 'rgba(255,255,255,0.5)' }} />
+                            <RechartsTooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', borderColor: 'rgba(255,255,255,0.2)', borderRadius: '12px', backdropFilter: 'blur(10px)' }} />
+                            <Line type="monotone" dataKey="time" name="Seconds" stroke="#22d3ee" strokeWidth={3} dot={{ r: 4, fill: "#22d3ee", strokeWidth: 0 }} activeDot={{ r: 6 }} />
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
@@ -525,15 +523,15 @@ export default function TeacherDashboardPage() {
       </div>
 
       {/* ── Mobile Bottom Tab Bar ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] pb-[env(safe-area-inset-bottom)] border-t border-[var(--border)] bg-[var(--bg-navbar)] md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] pb-[env(safe-area-inset-bottom)] border-t border-[rgba(255,255,255,0.12)] bg-[rgba(0,0,0,0.3)] backdrop-blur-[40px] md:hidden">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`flex flex-1 flex-col items-center justify-center gap-1 transition-colors ${
               activeTab === tab.key
-                ? "text-[var(--accent-cyan)]"
-                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
+                : "text-[var(--text-muted)] hover:text-white"
             }`}
           >
             <span className="text-xl leading-none">{tab.icon}</span>
