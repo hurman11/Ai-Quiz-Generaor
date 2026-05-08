@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import QuizForm from "@/components/QuizForm";
 import type { Quiz } from "@/types/quiz";
 import * as XLSX from "xlsx";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface StudentResult {
   student_name: string;
@@ -22,13 +21,12 @@ interface ResultsResponse {
   registered_count: number;
 }
 
-type TabKey = "generate" | "active" | "results" | "analytics";
+type TabKey = "generate" | "active" | "results";
 
 const tabs: { key: TabKey; label: string; icon: string }[] = [
   { key: "generate", label: "Generate Quiz", icon: "✨" },
   { key: "active", label: "Active", icon: "📋" },
   { key: "results", label: "Results", icon: "📊" },
-  { key: "analytics", label: "Analytics", icon: "📈" },
 ];
 
 export default function TeacherDashboardPage() {
@@ -74,7 +72,7 @@ export default function TeacherDashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === "results" || activeTab === "analytics") {
+    if (activeTab === "results") {
       fetchResults();
       const interval = setInterval(fetchResults, 5000);
       return () => clearInterval(interval);
@@ -121,42 +119,6 @@ export default function TeacherDashboardPage() {
       ? ((results.length / registeredCount) * 100).toFixed(0)
       : "0";
 
-  // Compute analytics data
-  const questionAnalytics = useMemo(() => {
-    if (!activeQuiz || results.length === 0) return [];
-    
-    return activeQuiz.questions.map((q, idx) => {
-      let correctCount = 0;
-      results.forEach(r => {
-        let details = r.question_details;
-        if (typeof details === 'string') {
-          try {
-            details = JSON.parse(details);
-          } catch {
-            details = {};
-          }
-        }
-        if (details && details[idx] && details[idx].correct) {
-          correctCount++;
-        }
-      });
-      const percent = Math.round((correctCount / results.length) * 100);
-      return {
-        name: `Q${idx + 1}`,
-        correctPercent: percent,
-        wrongPercent: 100 - percent,
-        topic: q.question.substring(0, 30) + "..."
-      };
-    });
-  }, [activeQuiz, results]);
-
-  const timeAnalytics = useMemo(() => {
-    if (results.length === 0) return [];
-    return results.map(r => ({
-      name: r.student_name.split(" ")[0],
-      time: r.time_taken || 0
-    })).sort((a, b) => a.time - b.time);
-  }, [results]);
 
   const exportToExcel = async () => {
     if (results.length === 0) return;
@@ -457,67 +419,7 @@ export default function TeacherDashboardPage() {
               </motion.div>
             )}
 
-            {/* ─── Analytics Tab ─── */}
-            {activeTab === "analytics" && (
-              <motion.div
-                key="analytics"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.3 }}
-                className="mx-auto max-w-5xl"
-              >
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-[rgba(255,255,255,0.1)]">
-                  <h2 className="text-2xl font-bold text-white">Classroom Analytics</h2>
-                </div>
-                
-                {results.length === 0 ? (
-                  <div className="edu-card flex flex-col items-center gap-4 py-12 text-center" style={{ borderStyle: 'dashed' }}>
-                    <span className="text-5xl opacity-80">📊</span>
-                    <p className="text-[var(--text-secondary)]">
-                      Analytics will appear here once students complete the quiz.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Question Insights Chart */}
-                    <div className="edu-card p-6 flex flex-col">
-                      <h3 className="text-lg font-bold text-white mb-2">Question Insights</h3>
-                      <p className="text-sm text-[var(--text-secondary)] mb-6">Percentage of students who answered correctly vs incorrectly.</p>
-                      <div className="h-64 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={questionAnalytics} margin={{ top: 5, right: 0, left: -20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
-                            <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" tick={{ fill: 'rgba(255,255,255,0.5)' }} />
-                            <YAxis stroke="rgba(255,255,255,0.5)" tick={{ fill: 'rgba(255,255,255,0.5)' }} />
-                            <RechartsTooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', borderColor: 'rgba(255,255,255,0.2)', borderRadius: '12px', backdropFilter: 'blur(10px)' }} />
-                            <Bar dataKey="correctPercent" name="Correct %" stackId="a" fill="#34d399" radius={[0, 0, 4, 4]} />
-                            <Bar dataKey="wrongPercent" name="Wrong %" stackId="a" fill="#f87171" radius={[4, 4, 0, 0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
 
-                    {/* Time to Completion Chart */}
-                    <div className="edu-card p-6 flex flex-col">
-                      <h3 className="text-lg font-bold text-white mb-2">Time-to-Completion</h3>
-                      <p className="text-sm text-[var(--text-secondary)] mb-6">How long each student took to finish the quiz (in seconds).</p>
-                      <div className="h-64 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={timeAnalytics} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
-                            <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" tick={{ fill: 'rgba(255,255,255,0.5)' }} />
-                            <YAxis stroke="rgba(255,255,255,0.5)" tick={{ fill: 'rgba(255,255,255,0.5)' }} />
-                            <RechartsTooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', borderColor: 'rgba(255,255,255,0.2)', borderRadius: '12px', backdropFilter: 'blur(10px)' }} />
-                            <Line type="monotone" dataKey="time" name="Seconds" stroke="#22d3ee" strokeWidth={3} dot={{ r: 4, fill: "#22d3ee", strokeWidth: 0 }} activeDot={{ r: 6 }} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            )}
           </AnimatePresence>
         </main>
       </div>
