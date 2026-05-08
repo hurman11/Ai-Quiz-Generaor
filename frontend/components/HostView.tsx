@@ -114,7 +114,7 @@ export default function HostView({ activeQuiz, setActiveQuiz, results, registere
           
           {phase === "lobby" && (
             <motion.div key="lobby" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="text-center">
-              <h2 className="text-5xl font-black text-white mb-8">Join at <span className="text-[var(--accent-cyan)] underline">nexus.vercel.app</span></h2>
+              <h2 className="text-5xl font-black text-white mb-8">Join at <span className="text-[var(--accent-cyan)] underline">ai-quiz-generaor.vercel.app</span></h2>
               <div className="text-9xl font-black text-white font-mono tracking-widest drop-shadow-[0_0_30px_rgba(255,255,255,0.4)]">
                 {activeQuiz.quiz_code}
               </div>
