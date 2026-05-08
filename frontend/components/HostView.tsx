@@ -125,10 +125,28 @@ export default function HostView({ activeQuiz, setActiveQuiz, results, registere
           
           {phase === "lobby" && (
             <motion.div key="lobby" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="text-center">
-              <h2 className="text-5xl font-black text-white mb-8">Join at <span className="text-[var(--accent-cyan)] underline">ai-quiz-generaor.vercel.app</span></h2>
-              <div className="text-9xl font-black text-white font-mono tracking-widest drop-shadow-[0_0_30px_rgba(255,255,255,0.4)]">
-                {activeQuiz.quiz_code}
+              <h2 className="text-5xl font-black text-white mb-8">Scan to Join!</h2>
+              
+              <div className="flex flex-col md:flex-row items-center justify-center gap-12 bg-white/5 p-12 rounded-3xl border border-white/10 backdrop-blur-md shadow-2xl">
+                {/* QR Code */}
+                <div className="bg-white p-4 rounded-2xl shadow-[0_0_40px_rgba(34,211,238,0.4)]">
+                   <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`https://ai-quiz-generaor.vercel.app/student?pin=${activeQuiz.quiz_code}`)}`} 
+                      alt="Join QR Code" 
+                      className="w-48 h-48 md:w-64 md:h-64" 
+                    />
+                </div>
+                
+                {/* Pin */}
+                <div className="text-center">
+                  <p className="text-2xl text-[var(--text-secondary)] mb-2">Or join at <span className="text-[var(--accent-cyan)] underline">ai-quiz-generaor.vercel.app</span></p>
+                  <p className="text-xl text-[var(--text-secondary)] mb-2">with Game Pin:</p>
+                  <div className="text-8xl md:text-9xl font-black text-white font-mono tracking-widest drop-shadow-[0_0_30px_rgba(255,255,255,0.4)]">
+                    {activeQuiz.quiz_code}
+                  </div>
+                </div>
               </div>
+
               <div className="mt-16">
                 <button onClick={handleNextQuestion} className="px-12 py-6 bg-white text-black text-3xl font-black rounded-full hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]">
                   START GAME
