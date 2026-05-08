@@ -73,12 +73,12 @@ export default function TeacherDashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === "results") {
+    if (activeTab === "results" || activeQuiz?.live_state) {
       fetchResults();
-      const interval = setInterval(fetchResults, 5000);
+      const interval = setInterval(fetchResults, activeQuiz?.live_state ? 1500 : 5000);
       return () => clearInterval(interval);
     }
-  }, [activeTab, fetchResults]);
+  }, [activeTab, fetchResults, activeQuiz?.live_state]);
 
   const handleLogout = () => {
     localStorage.removeItem("teacher_auth");
