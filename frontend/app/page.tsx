@@ -48,7 +48,7 @@ export default function HomePage() {
           animate="visible"
         >
           {/* ── Hero Text ── */}
-          <motion.div className="text-center max-w-3xl flex-shrink-0" variants={itemVariants}>
+          <motion.div className="text-center max-w-3xl flex-shrink-0 mt-8 sm:mt-12" variants={itemVariants}>
             <h1 className="font-extrabold text-white leading-tight" style={{ fontSize: "clamp(2.5rem, 6vw, 4rem)", letterSpacing: "-0.03em" }}>
               Ignite the Mind.<br/>
               <span className="text-white/75">Automate the Rest.</span>
