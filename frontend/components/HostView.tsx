@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Quiz } from "@/types/quiz";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from "recharts";
 
 interface HostViewProps {
   activeQuiz: Quiz;
@@ -155,24 +155,31 @@ export default function HostView({ activeQuiz, setActiveQuiz, results, registere
           )}
 
           {phase === "reveal" && currentQuestion && (
-            <motion.div key="reveal" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-5xl flex flex-col h-full items-center">
-              <h2 className="text-3xl text-white font-bold mb-4">{currentQuestion.question}</h2>
-              <div className="bg-white/10 rounded-2xl p-6 border border-[var(--accent-green)] text-[var(--accent-green)] text-2xl font-bold mb-12 shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+            <motion.div key="reveal" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-5xl flex flex-col h-full items-center justify-center py-4">
+              <h2 className="text-3xl md:text-4xl text-white font-bold mb-6 text-center">{currentQuestion.question}</h2>
+              <div className="bg-[rgba(34,197,94,0.15)] rounded-2xl px-8 py-4 border border-[rgba(34,197,94,0.4)] text-[var(--accent-green)] text-2xl font-bold mb-8 shadow-[0_0_30px_rgba(34,197,94,0.15)] flex items-center gap-3">
+                <span className="text-3xl">✓</span>
                 Correct Answer: {currentQuestion.correct}
               </div>
               
-              <div className="w-full h-[400px] bg-black/20 rounded-3xl p-8 backdrop-blur-sm border border-white/5">
+              <div className="w-full h-[250px] sm:h-[300px] md:h-[350px] bg-[rgba(255,255,255,0.03)] rounded-3xl p-6 backdrop-blur-md border border-[rgba(255,255,255,0.05)] shadow-xl">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={getAnswerTally()}>
-                    <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" tick={{fill: 'white', fontSize: 24, fontWeight: 'bold'}} />
-                    <Bar dataKey="count" radius={[8, 8, 0, 0]} />
+                  <BarChart data={getAnswerTally()} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" tick={{fill: 'rgba(255,255,255,0.8)', fontSize: 20, fontWeight: '600'}} axisLine={false} tickLine={false} />
+                    <Bar dataKey="count" radius={[8, 8, 0, 0]} maxBarSize={80}>
+                      {
+                        getAnswerTally().map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))
+                      }
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
-              <div className="mt-8 flex gap-4">
-                <button onClick={handleLeaderboard} className="btn-outline text-xl px-8 py-4">Show Leaderboard</button>
-                <button onClick={handleNextQuestion} className="btn-primary text-xl px-8 py-4">Next Question</button>
+              <div className="mt-8 flex gap-4 pb-8">
+                <button onClick={handleLeaderboard} className="btn-outline text-lg px-8 py-4 bg-[rgba(255,255,255,0.05)]">Show Leaderboard</button>
+                <button onClick={handleNextQuestion} className="btn-primary text-lg px-8 py-4 shadow-[0_0_20px_rgba(34,211,238,0.3)]">Next Question</button>
               </div>
             </motion.div>
           )}
