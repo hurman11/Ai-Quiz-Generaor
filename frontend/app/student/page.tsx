@@ -268,9 +268,8 @@ export default function StudentPage() {
     }
   }, [timeLeft, phase, selectedAnswer, quiz, currentIndex]);
 
-  const handlePinSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pinInput.trim()) return;
+  const joinWithPin = async (pin: string) => {
+    if (!pin.trim()) return;
     setPinError("");
     setPhase("loading");
     
@@ -278,10 +277,12 @@ export default function StudentPage() {
       const token = localStorage.getItem("student_token");
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       
-      const quizRes = await fetch(`${API_URL}/active-quiz?code=${pinInput.trim()}`);
+      const quizRes = await fetch(`${API_URL}/active-quiz?code=${pin.trim()}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      
       if (!quizRes.ok) {
-        if (quizRes.status === 403) setPinError("Invalid Game Pin");
-        else setPinError("No active quiz available");
+        setPinError("Invalid Game Pin");
         setPhase("enter_code");
         return;
       }
@@ -296,7 +297,7 @@ export default function StudentPage() {
       }
       
       // If backend is old and returned full quiz without checking pin:
-      if (parsed && parsed.quiz_code && parsed.quiz_code !== pinInput.trim()) {
+      if (parsed && parsed.quiz_code && parsed.quiz_code !== pin.trim()) {
         setPinError("Invalid Game Pin");
         setPhase("enter_code");
         return;
@@ -309,30 +310,39 @@ export default function StudentPage() {
       const checkRes = await fetch(`${API_URL}/student/check`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
-      
-      if (checkRes.status === 401) {
-        localStorage.removeItem("student_token");
-        router.push("/student/login");
-        return;
-      }
-
-      if (checkRes.status === 403 || checkRes.status === 404) {
-        setPhase(checkRes.status === 403 ? "denied" : "waiting");
-      } else if (checkRes.ok) {
-        const data = await checkRes.json();
-        if (data.status === "completed") {
-          setPhase("denied");
-        } else {
-          setPhase("welcome");
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        if (checkData.status === "completed") {
+           setPhase("denied");
+           return;
         }
-      } else {
-        setPhase("waiting");
       }
-    } catch {
-      setPinError("Connection error");
+      
+      setPhase("welcome");
+    } catch (error) {
+      console.error(error);
+      setPinError("Failed to verify Game Pin");
       setPhase("enter_code");
     }
   };
+
+  const handlePinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await joinWithPin(pinInput);
+  };
+
+  // Auto-join if pin is in URL
+  useEffect(() => {
+    if (phase === "enter_code" && typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const pinFromUrl = urlParams.get("pin");
+      if (pinFromUrl && !pinInput) {
+        setPinInput(pinFromUrl);
+        joinWithPin(pinFromUrl);
+      }
+    }
+  }, [phase]);
+
 
   const handleStartQuiz = () => {
     if (quiz) {
