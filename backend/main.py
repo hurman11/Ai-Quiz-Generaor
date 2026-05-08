@@ -206,8 +206,10 @@ async def get_active_quiz(code: Optional[str] = None):
 
 @app.post("/active-quiz")
 async def set_active_quiz(quiz: dict):
-    new_uuid = str(uuid.uuid4())
-    quiz_code = str(random.randint(100000, 999999))
+    new_uuid = quiz.get("quiz_uuid", str(uuid.uuid4()))
+    quiz_code = quiz.get("quiz_code", str(random.randint(100000, 999999)))
+    
+    quiz["quiz_uuid"] = new_uuid
     quiz["quiz_code"] = quiz_code
     with get_db() as conn:
         with conn.cursor() as cur:
@@ -262,6 +264,53 @@ class SubmitResult(BaseModel):
     total: int
     time_taken: int = 0
     question_details: dict = {}
+
+class SubmitAnswer(BaseModel):
+    question_index: int
+    answer: str
+
+@app.post("/submit-answer")
+async def submit_answer(ans: SubmitAnswer, user_id: int = Depends(get_current_user)):
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT quiz_uuid, data FROM active_quiz WHERE id = 1")
+            active_row = cur.fetchone()
+            if not active_row:
+                raise HTTPException(status_code=404, detail="No active quiz")
+            quiz_uuid = active_row["quiz_uuid"]
+            
+            cur.execute("SELECT name FROM users WHERE id = %s", (user_id,))
+            user = cur.fetchone()
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+                
+            cur.execute("SELECT question_details FROM results WHERE user_id = %s AND quiz_uuid = %s", (user_id, quiz_uuid))
+            res_row = cur.fetchone()
+            
+            if not res_row:
+                details = {str(ans.question_index): ans.answer}
+                total_q = len(active_row["data"].get("questions", []))
+                cur.execute(
+                    """
+                    INSERT INTO results (quiz_uuid, user_id, student_name, score, total, timestamp, time_taken, question_details)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (quiz_uuid, user_id, user["name"], 0, total_q, datetime.utcnow(), 0, json.dumps(details))
+                )
+            else:
+                details = res_row["question_details"] or {}
+                if isinstance(details, str): 
+                    try:
+                        details = json.loads(details)
+                    except:
+                        details = {}
+                details[str(ans.question_index)] = ans.answer
+                cur.execute(
+                    "UPDATE results SET question_details = %s WHERE user_id = %s AND quiz_uuid = %s", 
+                    (json.dumps(details), user_id, quiz_uuid)
+                )
+    return {"success": True}
+
 
 @app.post("/submit-result")
 async def submit_result(result: SubmitResult, user_id: int = Depends(get_current_user)):
