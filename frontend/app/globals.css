@@ -60,12 +60,12 @@ html {
   font-size: 16px;
   background: linear-gradient(
     135deg,
-    #1a1a4e 0%,
-    #2d1b69 20%,
-    #1e3a8a 40%,
-    #0f766e 60%,
-    #1e40af 80%,
-    #312e81 100%
+    #09090e 0%,
+    #1f0933 20%,
+    #022436 40%,
+    #3a0a2a 60%,
+    #0a1b38 80%,
+    #210b33 100%
   );
   background-size: 400% 400%;
   animation: gradientShift 18s ease infinite;
