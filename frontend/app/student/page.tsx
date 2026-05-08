@@ -79,7 +79,9 @@ export default function StudentPage() {
         }
         
         const parsed = await quizRes.json();
-        if (parsed.requires_code) {
+        
+        // Check if quiz requires code (either explicitly or if it has a quiz_code field)
+        if (parsed.requires_code || parsed.quiz_code) {
           setPhase("enter_code");
           return;
         }
@@ -255,9 +257,24 @@ export default function StudentPage() {
         return;
       }
       
-      const parsed: Quiz = await quizRes.json();
+      let parsed: Quiz | null = null;
+      try {
+        parsed = await quizRes.json();
+      } catch {
+        setPinError("Invalid server response");
+        setPhase("enter_code");
+        return;
+      }
+      
+      // If backend is old and returned full quiz without checking pin:
+      if (parsed && parsed.quiz_code && parsed.quiz_code !== pinInput.trim()) {
+        setPinError("Invalid Game Pin");
+        setPhase("enter_code");
+        return;
+      }
+
       setQuiz(parsed);
-      setUserAnswers(new Array(parsed.questions.length).fill(""));
+      setUserAnswers(new Array(parsed?.questions?.length || 0).fill(""));
 
       const checkRes = await fetch(`${API_URL}/student/check`, {
         headers: { "Authorization": `Bearer ${token}` }

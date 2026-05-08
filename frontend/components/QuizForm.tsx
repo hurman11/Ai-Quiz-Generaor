@@ -142,6 +142,7 @@ export default function QuizForm() {
       }
 
       const quiz = await res.json();
+      quiz.quiz_code = Math.floor(100000 + Math.random() * 900000).toString();
 
       // Push to backend so students can access it
       const pushRes = await fetch(`${API_URL}/active-quiz`, {
@@ -151,8 +152,8 @@ export default function QuizForm() {
       });
       
       const pushData = await pushRes.json();
-      quiz.quiz_code = pushData.quiz_code;
-      quiz.quiz_uuid = pushData.quiz_uuid;
+      if (pushData.quiz_uuid) quiz.quiz_uuid = pushData.quiz_uuid;
+      if (pushData.quiz_code) quiz.quiz_code = pushData.quiz_code; // override if backend generated one
 
       // Save locally for teacher dashboard
       localStorage.setItem("active_quiz", JSON.stringify(quiz));
