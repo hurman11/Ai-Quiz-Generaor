@@ -61,12 +61,11 @@ export default function AiTutor({ questions, userAnswers }: AiTutorProps) {
     <div className="w-full mt-4">
       <button
         onClick={handleExplain}
-        className="w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3"
+        className="w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-3 border shadow-sm hover:shadow-md"
         style={{
-          background: "linear-gradient(135deg, rgba(167,139,250,0.25), rgba(34,211,238,0.25))",
-          border: "1px solid rgba(167,139,250,0.4)",
-          color: "white",
-          boxShadow: "0 0 20px rgba(167,139,250,0.15)",
+          background: "var(--glass-purple-tint)",
+          borderColor: "var(--border-purple)",
+          color: "var(--text-primary)",
         }}
       >
         <span className="text-2xl">🤖</span>
@@ -83,32 +82,31 @@ export default function AiTutor({ questions, userAnswers }: AiTutorProps) {
             className="overflow-hidden"
           >
             <div
-              className="mt-4 rounded-2xl p-6 border"
+              className="mt-4 rounded-2xl p-6 border backdrop-blur-xl"
               style={{
-                background: "rgba(167,139,250,0.08)",
-                borderColor: "rgba(167,139,250,0.25)",
-                backdropFilter: "blur(20px)",
+                background: "var(--glass-purple-deep)",
+                borderColor: "var(--border-purple)",
               }}
             >
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
-                    style={{ background: "rgba(167,139,250,0.2)", border: "1px solid rgba(167,139,250,0.4)" }}
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-xl border"
+                    style={{ background: "var(--glass-purple-tint)", borderColor: "var(--border-purple)" }}
                   >
                     🤖
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-sm">AI Tutor</h3>
-                    <p className="text-xs" style={{ color: "rgba(167,139,250,0.8)" }}>
+                    <h3 className="text-[var(--text-primary)] font-bold text-sm">AI Tutor</h3>
+                    <p className="text-xs font-medium" style={{ color: "var(--accent-purple)" }}>
                       Powered by Llama 3
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-white/40 hover:text-white/80 transition-colors text-xl"
+                  className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors text-xl"
                 >
                   ✕
                 </button>
@@ -127,7 +125,7 @@ export default function AiTutor({ questions, userAnswers }: AiTutorProps) {
               )}
 
               {error && (
-                <div className="error-banner text-center">{error}</div>
+                <div className="error-banner text-center text-accent-red">{error}</div>
               )}
 
               {explanation && !loading && (
@@ -137,10 +135,7 @@ export default function AiTutor({ questions, userAnswers }: AiTutorProps) {
                   transition={{ delay: 0.2 }}
                   className="max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar"
                 >
-                  <div
-                    className="text-sm leading-relaxed whitespace-pre-wrap"
-                    style={{ color: "rgba(255,255,255,0.85)" }}
-                  >
+                  <div className="text-sm leading-relaxed whitespace-pre-wrap text-[var(--text-secondary)] font-medium">
                     {explanation}
                   </div>
                 </motion.div>
@@ -152,3 +147,4 @@ export default function AiTutor({ questions, userAnswers }: AiTutorProps) {
     </div>
   );
 }
+
