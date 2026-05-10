@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import type { QuizQuestion } from "@/types/quiz";
+import AiTutor from "@/components/AiTutor";
 
 interface ScoreCardProps {
   score: number;
@@ -187,6 +188,9 @@ export default function ScoreCard({
             </div>
           </div>
         </div>
+
+        {/* ── AI Tutor ── */}
+        <AiTutor questions={questions} userAnswers={userAnswers} />
 
         {/* ── Action Button ── */}
         <button

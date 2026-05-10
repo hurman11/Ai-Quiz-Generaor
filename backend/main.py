@@ -476,3 +476,53 @@ async def generate_quiz(request: QuizRequest):
         return json.loads(result_text)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ─── AI TUTOR ENDPOINT ───
+class TutorRequest(BaseModel):
+    wrong_questions: list  # [{question, options, correct, user_answer}]
+
+@app.post("/ai-tutor")
+async def ai_tutor(request: TutorRequest):
+    if not request.wrong_questions:
+        return {"explanation": "You got everything right! Great job! 🎉"}
+    
+    questions_text = ""
+    for i, q in enumerate(request.wrong_questions, 1):
+        correct_letter = q.get("correct", "?")
+        user_letter = q.get("user_answer", "No answer")
+        options = q.get("options", {})
+        correct_text = options.get(correct_letter, "Unknown")
+        user_text = options.get(user_letter, "No answer given")
+        questions_text += f"""
+Question {i}: {q.get('question', '')}
+- Student answered: {user_letter} ({user_text})
+- Correct answer: {correct_letter} ({correct_text})
+"""
+    
+    tutor_prompt = f"""You are a friendly, encouraging AI tutor helping a student understand their mistakes on a quiz.
+The student got the following questions wrong. For EACH question:
+1. Explain WHY their answer was incorrect (briefly, 1-2 sentences)
+2. Explain WHY the correct answer is right (clearly, 2-3 sentences)
+3. Give a quick memory tip or analogy to help them remember
+
+Be warm, supportive, and use simple language. Use emojis occasionally to keep it fun.
+Keep your total response under 600 words.
+
+Questions the student got wrong:
+{questions_text}
+"""
+    
+    try:
+        groq_api_key = os.environ.get("GROQ_API_KEY")
+        if not groq_api_key:
+            raise Exception("GROQ_API_KEY not configured")
+        client = Groq(api_key=groq_api_key)
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": tutor_prompt}],
+            temperature=0.7,
+        )
+        explanation = response.choices[0].message.content
+        return {"explanation": explanation}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

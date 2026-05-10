@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -31,12 +32,15 @@ export default function HomePage() {
           <span className="text-2xl">⚡</span>
           <span className="font-bold text-white text-lg sm:text-xl tracking-tight">Nexus</span>
         </div>
-        <button
-          onClick={() => router.push("/teacher/login")}
-          className="btn-outline text-sm sm:text-base py-1.5 px-4 min-h-[36px] sm:min-h-[40px]"
-        >
-          Teacher Login
-        </button>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <button
+            onClick={() => router.push("/teacher/login")}
+            className="btn-outline text-sm sm:text-base py-1.5 px-4 min-h-[36px] sm:min-h-[40px]"
+          >
+            Teacher Login
+          </button>
+        </div>
       </nav>
 
       {/* ── Main Content ── */}

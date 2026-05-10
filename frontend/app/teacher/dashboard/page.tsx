@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import QuizForm from "@/components/QuizForm";
 import HostView from "@/components/HostView";
+import ThemeToggle from "@/components/ThemeToggle";
 import type { Quiz } from "@/types/quiz";
 import * as XLSX from "xlsx";
 
@@ -214,13 +215,16 @@ export default function TeacherDashboardPage() {
             Teacher Dashboard
           </span>
         </div>
-        <button
-          id="logout-btn"
-          onClick={handleLogout}
-          className="btn-outline px-4 py-2 text-sm min-h-[40px] hover:text-[#f87171] hover:border-[#f87171]"
-        >
-          Logout
-        </button>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <button
+            id="logout-btn"
+            onClick={handleLogout}
+            className="btn-outline px-4 py-2 text-sm min-h-[40px] hover:text-[#f87171] hover:border-[#f87171]"
+          >
+            Logout
+          </button>
+        </div>
       </header>
 
       <div className="flex flex-1 relative">

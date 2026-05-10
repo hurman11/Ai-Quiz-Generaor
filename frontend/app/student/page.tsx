@@ -7,6 +7,7 @@ import type { Quiz } from "@/types/quiz";
 import QuizQuestion from "@/components/QuizQuestion";
 import ScoreCard from "@/components/ScoreCard";
 import LiveStudentView from "@/components/LiveStudentView";
+import ThemeToggle from "@/components/ThemeToggle";
 
 type Phase = "loading" | "enter_code" | "waiting" | "welcome" | "quiz" | "done" | "denied";
 type TabKey = "active" | "history" | "leaderboard";
@@ -922,7 +923,11 @@ export default function StudentPage() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-[rgba(255,255,255,0.12)]">
+        <div className="p-4 border-t border-[rgba(255,255,255,0.12)] flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-[var(--text-muted)]">Theme</span>
+            <ThemeToggle />
+          </div>
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[#f87171] hover:bg-[rgba(248,113,113,0.1)] transition-colors"
@@ -941,7 +946,8 @@ export default function StudentPage() {
             <span className="text-xl">🎓</span>
             <h1 className="font-bold text-white tracking-tight">Student</h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            <ThemeToggle />
             <button onClick={handleLogout} className="text-xs text-[#f87171] font-semibold px-2">Logout</button>
           </div>
         </header>
