@@ -97,12 +97,15 @@ h1, h2, h3, h4, h5, h6 {
 html[data-theme="light"] {
   background: linear-gradient(
     135deg,
-    #f0f4ff 0%,
-    #f5f3ff 50%,
-    #faf5ff 100%
+    #f8fafc 0%,
+    #f1f5f9 20%,
+    #eff6ff 40%,
+    #f5f3ff 60%,
+    #faf5ff 80%,
+    #f0f9ff 100%
   );
   background-size: 400% 400%;
-  animation: gradientShift 18s ease infinite;
+  animation: gradientShift 15s ease infinite;
 }
 
 html[data-theme="light"] body {
@@ -110,13 +113,16 @@ html[data-theme="light"] body {
 }
 
 [data-theme="light"] {
-  --glass-light:        rgba(255, 255, 255, 0.9);
-  --glass-medium:       rgba(255, 255, 255, 0.75);
+  /* Frosted Apple Glass (Light) */
+  --glass-light:        rgba(255, 255, 255, 0.55);
+  --glass-medium:       rgba(255, 255, 255, 0.45);
   --glass-dark:         rgba(0, 0, 0, 0.05);
-  --glass-border:       rgba(0, 0, 0, 0.1);
+  --glass-border:       rgba(0, 0, 0, 0.08);
   --glass-border-bright:rgba(59, 130, 246, 0.4);
-  --glass-shadow:       0 12px 40px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --glass-shadow:       0 12px 40px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   --glass-shadow-heavy: 0 20px 50px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1);
+  --glass-blur:         blur(30px) saturate(190%);
+  --glass-blur-heavy:   blur(50px) saturate(210%);
 
   --text-primary:       #0f172a;
   --text-secondary:     #334155;
@@ -130,18 +136,19 @@ html[data-theme="light"] body {
   --accent-amber:       #f59e0b;
   --accent-purple:      #8b5cf6;
 
-  --glass-green:        rgba(16, 185, 129, 0.1);
-  --glass-red:          rgba(239, 68, 68, 0.1);
-  --glass-blue:         rgba(59, 130, 246, 0.1);
-  --glass-amber:        rgba(245, 158, 11, 0.1);
-  --glass-purple-tint:  rgba(139, 92, 246, 0.12);
-  --glass-purple-deep:  rgba(139, 92, 246, 0.05);
+  --glass-green:        rgba(16, 185, 129, 0.12);
+  --glass-red:          rgba(239, 68, 68, 0.12);
+  --glass-blue:         rgba(59, 130, 246, 0.12);
+  --glass-amber:        rgba(245, 158, 11, 0.12);
+  --glass-purple-tint:  rgba(139, 92, 246, 0.15);
+  --glass-purple-deep:  rgba(139, 92, 246, 0.08);
 
-  --border-green:       rgba(16, 185, 129, 0.25);
-  --border-red:         rgba(239, 68, 68, 0.25);
-  --border-blue:        rgba(59, 130, 246, 0.25);
-  --border-purple:      rgba(139, 92, 246, 0.3);
+  --border-green:       rgba(16, 185, 129, 0.3);
+  --border-red:         rgba(239, 68, 68, 0.3);
+  --border-blue:        rgba(59, 130, 246, 0.3);
+  --border-purple:      rgba(139, 92, 246, 0.35);
 }
+
 
 /* Forced overrides for hardcoded white text in light mode */
 [data-theme="light"] .text-white,
