@@ -412,6 +412,11 @@ export default function StudentPage() {
     router.push("/student/login");
   };
 
+  const handleStartQuiz = () => {
+    setStartTime(Date.now());
+    setPhase("quiz");
+  };
+
   // Timer SVG logic
   const getTimerColor = (): string => {
     if (timeLeft > 15) return "text-[#34d399]";
