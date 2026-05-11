@@ -548,7 +548,7 @@ export default function StudentPage() {
 
     if (phase === "denied") {
       return (
-        <div className="flex h-full flex-col items-center justify-center">
+        <div className="flex min-h-[80vh] flex-col items-center justify-center">
           <motion.div
             className="edu-card flex flex-col items-center gap-6 text-center max-w-md w-full"
             initial={{ opacity: 0, scale: 0.95 }}
@@ -577,7 +577,7 @@ export default function StudentPage() {
 
     if (phase === "welcome" && quiz) {
       return (
-        <div className="flex h-full flex-col items-center justify-center">
+        <div className="flex min-h-[80vh] flex-col items-center justify-center">
           <motion.div
             className="w-full max-w-md mx-auto"
             initial={{ opacity: 0, y: 8 }}
@@ -617,7 +617,7 @@ export default function StudentPage() {
 
     if (phase === "done" && quiz) {
       return (
-        <div className="flex h-full items-center justify-center">
+        <div className="flex min-h-[80vh] items-center justify-center">
           <motion.div
             className="w-full max-w-2xl mx-auto"
             initial={{ opacity: 0, scale: 0.98 }}
@@ -642,7 +642,7 @@ export default function StudentPage() {
       const progressPercent = ((currentIndex + (selectedAnswer ? 1 : 0)) / totalQuestions) * 100;
 
       return (
-        <div className="flex h-full flex-col items-center pb-20">
+        <div className="flex flex-col items-center pb-32">
           <div className="w-full max-w-2xl mx-auto mt-8">
             <motion.div
               className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
