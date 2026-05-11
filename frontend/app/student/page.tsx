@@ -31,7 +31,10 @@ interface LeaderboardEntry {
 const tabs: { key: TabKey; label: string; icon: string }[] = [
   { key: "active", label: "Active Quiz", icon: "🎯" },
   { key: "leaderboard", label: "Leaderboard", icon: "🏆" },
-  { key: "history", label: "My Results", icon: "📊" }export default function StudentPage() {
+  { key: "history", label: "My Results", icon: "📊" }
+];
+
+export default function StudentPage() {
   const router = useRouter();
   
   // App State
