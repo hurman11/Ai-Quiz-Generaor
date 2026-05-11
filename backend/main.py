@@ -136,7 +136,7 @@ class UserLogin(BaseModel):
     password: str
 
 @app.post("/auth/register")
-async def register(user: UserRegister):
+def register(user: UserRegister):
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
@@ -158,7 +158,7 @@ async def register(user: UserRegister):
         raise HTTPException(status_code=500, detail=f"Server Crash: {str(e)} - Type: {type(e)}")
 
 @app.post("/auth/login")
-async def login(user: UserLogin):
+def login(user: UserLogin):
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
@@ -175,7 +175,7 @@ async def login(user: UserLogin):
         raise HTTPException(status_code=500, detail=f"Server Crash: {str(e)} - Type: {type(e)}")
 
 @app.get("/auth/me")
-async def get_me(user_id: int = Depends(get_current_user)):
+def get_me(user_id: int = Depends(get_current_user)):
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT id, name, email FROM users WHERE id = %s", (user_id,))
@@ -188,36 +188,48 @@ async def get_me(user_id: int = Depends(get_current_user)):
 QUIZ_CACHE = {
     "data": None,
     "quiz_uuid": None,
-    "last_updated": None
+    "last_updated": None,
+    "last_refresh": None
 }
 
 def refresh_quiz_cache():
-    """Internal helper to sync cache with DB"""
+    """Internal helper to sync cache with DB - Rate limited to once every 10s if empty"""
+    now = datetime.utcnow()
+    
+    # If we refreshed very recently (within 10s), don't hit the DB again
+    if QUIZ_CACHE["last_refresh"] and (now - QUIZ_CACHE["last_refresh"]).total_seconds() < 10:
+        return
+
+    print(f"Refreshing Quiz Cache from DB at {now}...")
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT data, quiz_uuid FROM active_quiz WHERE id = 1")
                 row = cur.fetchone()
+                QUIZ_CACHE["last_refresh"] = now
                 if row:
                     QUIZ_CACHE["data"] = row["data"]
                     QUIZ_CACHE["quiz_uuid"] = row["quiz_uuid"]
-                    QUIZ_CACHE["last_updated"] = datetime.utcnow()
+                    QUIZ_CACHE["last_updated"] = now
                 else:
                     QUIZ_CACHE["data"] = None
                     QUIZ_CACHE["quiz_uuid"] = None
-    except:
-        pass
+    except Exception as e:
+        print(f"Cache Refresh Error: {e}")
+        # Don't reset last_refresh so we don't immediately retry on error
+        QUIZ_CACHE["last_refresh"] = now 
 
 # ─── QUIZ MANAGEMENT ENDPOINTS ───
 @app.get("/active-quiz")
-async def get_active_quiz(code: Optional[str] = None):
-    # Use cache if available
+def get_active_quiz(code: Optional[str] = None):
+    # Refresh cache if missing or stale
     if QUIZ_CACHE["data"] is None:
         refresh_quiz_cache()
     
     if QUIZ_CACHE["data"] is None:
         raise HTTPException(status_code=404, detail="No active quiz available")
     
+    # Ensure data is consistent
     quiz_data = QUIZ_CACHE["data"].copy()
     
     if code is None:
@@ -230,7 +242,7 @@ async def get_active_quiz(code: Optional[str] = None):
     return quiz_data
 
 @app.post("/active-quiz")
-async def set_active_quiz(quiz: dict):
+def set_active_quiz(quiz: dict):
     new_uuid = quiz.get("quiz_uuid", str(uuid.uuid4()))
     quiz_code = quiz.get("quiz_code", str(random.randint(100000, 999999)))
     
@@ -256,7 +268,7 @@ async def set_active_quiz(quiz: dict):
     return {"success": True, "quiz_uuid": new_uuid, "quiz_code": quiz_code}
 
 @app.delete("/active-quiz")
-async def clear_active_quiz():
+def clear_active_quiz():
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("DELETE FROM active_quiz WHERE id = 1")
@@ -270,7 +282,7 @@ async def clear_active_quiz():
 
 # ─── STUDENT CHECK & SUBMISSION ───
 @app.get("/student/check")
-async def check_student(user_id: int = Depends(get_current_user)):
+def check_student(user_id: int = Depends(get_current_user)):
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT quiz_uuid FROM active_quiz WHERE id = 1")
@@ -287,7 +299,7 @@ async def check_student(user_id: int = Depends(get_current_user)):
             return {"status": "new"}
 
 @app.get("/student/history")
-async def get_student_history(user_id: int = Depends(get_current_user)):
+def get_student_history(user_id: int = Depends(get_current_user)):
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -308,7 +320,7 @@ class SubmitAnswer(BaseModel):
     answer: str
 
 @app.post("/submit-answer")
-async def submit_answer(ans: SubmitAnswer, user_id: int = Depends(get_current_user)):
+def submit_answer(ans: SubmitAnswer, user_id: int = Depends(get_current_user)):
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT quiz_uuid, data FROM active_quiz WHERE id = 1")
@@ -351,7 +363,7 @@ async def submit_answer(ans: SubmitAnswer, user_id: int = Depends(get_current_us
 
 
 @app.post("/submit-result")
-async def submit_result(result: SubmitResult, user_id: int = Depends(get_current_user)):
+def submit_result(result: SubmitResult, user_id: int = Depends(get_current_user)):
     with get_db() as conn:
         with conn.cursor() as cur:
             # Get active quiz
@@ -385,7 +397,7 @@ async def submit_result(result: SubmitResult, user_id: int = Depends(get_current
 
 # ─── TEACHER RESULTS ENDPOINTS ───
 @app.get("/results")
-async def get_results():
+def get_results():
     with get_db() as conn:
         with conn.cursor() as cur:
             # We only return results for the CURRENT active quiz
@@ -410,7 +422,7 @@ async def get_results():
             }
 
 @app.delete("/results")
-async def clear_results():
+def clear_results():
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT quiz_uuid FROM active_quiz WHERE id = 1")
@@ -493,16 +505,16 @@ class QuizRequest(BaseModel):
     difficulty: str
 
 @app.post("/extract-text")
-async def extract_text(file: UploadFile = File(...)):
+def extract_text(file: UploadFile = File(...)):
     try:
-        content = await file.read()
+        content = file.file.read()
         context_text = extract_text_from_file(content, file.filename)
         return {"text": context_text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/generate-quiz")
-async def generate_quiz(request: QuizRequest):
+def generate_quiz(request: QuizRequest):
     # truncate if too long (Groq token limit approx 8k context)
     safe_material = request.material[:25000]
     prompt = build_prompt(
@@ -522,7 +534,7 @@ class TutorRequest(BaseModel):
     wrong_questions: list  # [{question, options, correct, user_answer}]
 
 @app.post("/ai-tutor")
-async def ai_tutor(request: TutorRequest):
+def ai_tutor(request: TutorRequest):
     if not request.wrong_questions:
         return {"explanation": "You got everything right! Great job! 🎉"}
     

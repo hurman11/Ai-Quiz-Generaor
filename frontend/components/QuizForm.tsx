@@ -114,6 +114,8 @@ export default function QuizForm() {
     setMaterial("");
   };
 
+  const [statusMessage, setStatusMessage] = useState("");
+
   const handleSubmit = async () => {
     if (!material.trim()) {
       setError("Please enter a topic, paste material, or upload a file.");
@@ -123,6 +125,24 @@ export default function QuizForm() {
     setError(null);
     setSuccess(false);
     setLoading(true);
+    setStatusMessage("Connecting to AI server...");
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      setError("Generation timed out. This usually happens when the server is waking up. Please try again.");
+      setLoading(false);
+    }, 90000); // 90 second timeout for AI generation
+
+    // Progressive status messages
+    const statusInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      if (elapsed > 60000) setStatusMessage("Finalizing your quiz questions...");
+      else if (elapsed > 30000) setStatusMessage("Still generating, please hold on...");
+      else if (elapsed > 10000) setStatusMessage("AI is thinking hard...");
+    }, 5000);
+
+    const startTime = Date.now();
 
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -134,13 +154,18 @@ export default function QuizForm() {
           num_questions: numQuestions,
           difficulty,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+      clearInterval(statusInterval);
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({ detail: "Unknown error" }));
         throw new Error(errData.detail || `Server error: ${res.status}`);
       }
 
+      setStatusMessage("Quiz generated! Making it live...");
       const quiz = await res.json();
       quiz.quiz_code = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -149,18 +174,22 @@ export default function QuizForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(quiz),
+        signal: controller.signal,
       });
       
       const pushData = await pushRes.json();
       if (pushData.quiz_uuid) quiz.quiz_uuid = pushData.quiz_uuid;
-      if (pushData.quiz_code) quiz.quiz_code = pushData.quiz_code; // override if backend generated one
+      if (pushData.quiz_code) quiz.quiz_code = pushData.quiz_code; 
 
       // Save locally for teacher dashboard
       localStorage.setItem("active_quiz", JSON.stringify(quiz));
-      // Force reload dashboard to show active quiz tab
       window.location.reload();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Connection failed.";
+      clearTimeout(timeoutId);
+      clearInterval(statusInterval);
+      const message = err instanceof Error && err.name === 'AbortError' 
+        ? "Request timed out. Please try again." 
+        : (err instanceof Error ? err.message : "Connection failed.");
       setError(message);
     } finally {
       setLoading(false);
@@ -404,7 +433,7 @@ export default function QuizForm() {
                 className="opacity-75"
               />
             </svg>
-            Generating Quiz...
+            {statusMessage || "Generating Quiz..."}
           </span>
         ) : (
           "Generate Quiz"
