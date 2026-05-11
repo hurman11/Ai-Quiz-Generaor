@@ -184,25 +184,50 @@ async def get_me(user_id: int = Depends(get_current_user)):
                 raise HTTPException(status_code=404, detail="User not found")
             return user
 
+# ─── QUIZ CACHE (DEFENSIVE LAYER) ───
+QUIZ_CACHE = {
+    "data": None,
+    "quiz_uuid": None,
+    "last_updated": None
+}
+
+def refresh_quiz_cache():
+    """Internal helper to sync cache with DB"""
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT data, quiz_uuid FROM active_quiz WHERE id = 1")
+                row = cur.fetchone()
+                if row:
+                    QUIZ_CACHE["data"] = row["data"]
+                    QUIZ_CACHE["quiz_uuid"] = row["quiz_uuid"]
+                    QUIZ_CACHE["last_updated"] = datetime.utcnow()
+                else:
+                    QUIZ_CACHE["data"] = None
+                    QUIZ_CACHE["quiz_uuid"] = None
+    except:
+        pass
+
 # ─── QUIZ MANAGEMENT ENDPOINTS ───
 @app.get("/active-quiz")
 async def get_active_quiz(code: Optional[str] = None):
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT data, quiz_uuid FROM active_quiz WHERE id = 1")
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(status_code=404, detail="No active quiz available")
-            quiz_data = row["data"]
-            
-            if code is None:
-                return {"active": True, "requires_code": True}
-                
-            if quiz_data.get("quiz_code") and str(quiz_data.get("quiz_code")) != str(code):
-                raise HTTPException(status_code=403, detail="Invalid quiz code")
-                
-            quiz_data["quiz_uuid"] = row["quiz_uuid"]
-            return quiz_data
+    # Use cache if available
+    if QUIZ_CACHE["data"] is None:
+        refresh_quiz_cache()
+    
+    if QUIZ_CACHE["data"] is None:
+        raise HTTPException(status_code=404, detail="No active quiz available")
+    
+    quiz_data = QUIZ_CACHE["data"].copy()
+    
+    if code is None:
+        return {"active": True, "requires_code": True}
+        
+    if quiz_data.get("quiz_code") and str(quiz_data.get("quiz_code")) != str(code):
+        raise HTTPException(status_code=403, detail="Invalid quiz code")
+        
+    quiz_data["quiz_uuid"] = QUIZ_CACHE["quiz_uuid"]
+    return quiz_data
 
 @app.post("/active-quiz")
 async def set_active_quiz(quiz: dict):
@@ -211,6 +236,7 @@ async def set_active_quiz(quiz: dict):
     
     quiz["quiz_uuid"] = new_uuid
     quiz["quiz_code"] = quiz_code
+    
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -221,6 +247,12 @@ async def set_active_quiz(quiz: dict):
                 """,
                 (json.dumps(quiz), new_uuid)
             )
+    
+    # Update cache immediately
+    QUIZ_CACHE["data"] = quiz
+    QUIZ_CACHE["quiz_uuid"] = new_uuid
+    QUIZ_CACHE["last_updated"] = datetime.utcnow()
+    
     return {"success": True, "quiz_uuid": new_uuid, "quiz_code": quiz_code}
 
 @app.delete("/active-quiz")
@@ -228,6 +260,12 @@ async def clear_active_quiz():
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("DELETE FROM active_quiz WHERE id = 1")
+    
+    # Clear cache immediately
+    QUIZ_CACHE["data"] = None
+    QUIZ_CACHE["quiz_uuid"] = None
+    QUIZ_CACHE["last_updated"] = datetime.utcnow()
+    
     return {"success": True}
 
 # ─── STUDENT CHECK & SUBMISSION ───
