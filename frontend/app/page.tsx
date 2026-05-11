@@ -25,7 +25,7 @@ export default function HomePage() {
   const router = useRouter();
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-transparent">
+    <div className="flex min-h-screen flex-col bg-transparent">
       {/* ── Navbar ── */}
       <nav className="flex items-center justify-between px-4 sm:px-8 py-3 glass-nav z-10 w-full flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -44,9 +44,9 @@ export default function HomePage() {
       </nav>
 
       {/* ── Main Content ── */}
-      <main className="flex flex-1 flex-col items-center justify-center px-4 z-10 overflow-hidden">
+      <main className="flex flex-1 flex-col items-center justify-center px-4 z-10">
         <motion.div
-          className="flex w-full max-w-4xl flex-col items-center justify-center gap-8 sm:gap-12 h-full max-h-full py-4"
+          className="flex w-full max-w-4xl flex-col items-center justify-center gap-8 sm:gap-12 py-12"
           variants={containerVariants}
           initial="hidden"
           animate="visible"

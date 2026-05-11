@@ -970,14 +970,14 @@ export default function StudentPage() {
       {/* ── Main Content Area ── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Mobile Header */}
-        <header className="md:hidden h-16 border-b border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.12)] backdrop-blur-[40px] flex items-center justify-between px-4 z-10 shrink-0">
+        <header className="md:hidden h-14 border-b border-[rgba(255,255,255,0.15)] bg-[rgba(255,255,255,0.12)] backdrop-blur-[40px] flex items-center justify-between px-4 z-10 shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-xl">🎓</span>
-            <h1 className="font-bold text-white tracking-tight">Student</h1>
+            <h1 className="font-bold text-white tracking-tight">Nexus</h1>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-4 items-center">
             <ThemeToggle />
-            <button onClick={handleLogout} className="text-xs text-[#f87171] font-semibold px-2">Logout</button>
+            <button onClick={handleLogout} className="text-sm text-[#f87171] font-bold">Logout</button>
           </div>
         </header>
 
@@ -994,7 +994,7 @@ export default function StudentPage() {
           </motion.div>
         </div>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8 relative">
           {activeTab === "active" && renderActiveQuiz()}
           {activeTab === "leaderboard" && renderLeaderboard()}
           {activeTab === "history" && renderHistory()}

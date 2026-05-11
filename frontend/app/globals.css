@@ -326,7 +326,7 @@ html[data-theme="light"] body {
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: var(--radius-card);
-  padding: 1.5rem;
+  padding: 1.25rem;
   transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   width: 100%;
   box-sizing: border-box;
@@ -345,7 +345,7 @@ html[data-theme="light"] body {
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: var(--radius-card);
-  padding: 1.5rem;
+  padding: 1.25rem;
   width: 100%;
   box-sizing: border-box;
   transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);

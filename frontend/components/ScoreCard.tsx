@@ -154,8 +154,7 @@ export default function ScoreCard({
           <h3 className="mb-3 text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
             Answer Review
           </h3>
-          <div className="max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
-            <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
               {questions.map((q, idx) => {
                 const isCorrect = userAnswers[idx] === q.correct;
                 
@@ -186,7 +185,6 @@ export default function ScoreCard({
                 );
               })}
             </div>
-          </div>
         </div>
 
         {/* ── AI Tutor ── */}

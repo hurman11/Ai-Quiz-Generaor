@@ -86,11 +86,11 @@ export default function LiveStudentView({ quiz, liveState, userAnswers, setUserA
                   <h2 className="text-3xl font-bold text-white">Waiting for others...</h2>
                </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 flex-1 py-8">
-                <button onClick={() => handleAnswer("A")} className="bg-[#ef4444] rounded-2xl shadow-[0_5px_15px_rgba(239,68,68,0.4)] active:scale-95 transition-transform" />
-                <button onClick={() => handleAnswer("B")} className="bg-[#3b82f6] rounded-2xl shadow-[0_5px_15px_rgba(59,130,246,0.4)] active:scale-95 transition-transform" />
-                <button onClick={() => handleAnswer("C")} className="bg-[#eab308] rounded-2xl shadow-[0_5px_15px_rgba(234,179,8,0.4)] active:scale-95 transition-transform" />
-                <button onClick={() => handleAnswer("D")} className="bg-[#22c55e] rounded-2xl shadow-[0_5px_15px_rgba(34,197,94,0.4)] active:scale-95 transition-transform" />
+              <div className="grid grid-cols-2 gap-4 flex-1 py-8 max-h-[600px] w-full">
+                <button onClick={() => handleAnswer("A")} className="bg-[#ef4444] rounded-2xl shadow-[0_5px_15px_rgba(239,68,68,0.4)] active:scale-95 transition-transform flex items-center justify-center text-5xl font-black text-white/50">A</button>
+                <button onClick={() => handleAnswer("B")} className="bg-[#3b82f6] rounded-2xl shadow-[0_5px_15px_rgba(59,130,246,0.4)] active:scale-95 transition-transform flex items-center justify-center text-5xl font-black text-white/50">B</button>
+                <button onClick={() => handleAnswer("C")} className="bg-[#eab308] rounded-2xl shadow-[0_5px_15px_rgba(234,179,8,0.4)] active:scale-95 transition-transform flex items-center justify-center text-5xl font-black text-white/50">C</button>
+                <button onClick={() => handleAnswer("D")} className="bg-[#22c55e] rounded-2xl shadow-[0_5px_15px_rgba(34,197,94,0.4)] active:scale-95 transition-transform flex items-center justify-center text-5xl font-black text-white/50">D</button>
               </div>
             )}
           </motion.div>
