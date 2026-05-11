@@ -329,17 +329,19 @@ async def submit_result(result: SubmitResult, user_id: int = Depends(get_current
             if not user:
                 raise HTTPException(status_code=404, detail="User not found")
                 
-            try:
-                cur.execute(
-                    """
-                    INSERT INTO results (quiz_uuid, user_id, student_name, score, total, timestamp, time_taken, question_details)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    """,
-                    (quiz_uuid, user_id, user["name"], result.score, result.total, datetime.utcnow(), result.time_taken, json.dumps(result.question_details))
-                )
-            except psycopg2.errors.UniqueViolation:
-                # Already submitted
-                raise HTTPException(status_code=403, detail="Already completed this quiz")
+            cur.execute(
+                """
+                INSERT INTO results (quiz_uuid, user_id, student_name, score, total, timestamp, time_taken, question_details)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (quiz_uuid, user_id) DO UPDATE SET
+                    score = EXCLUDED.score,
+                    total = EXCLUDED.total,
+                    timestamp = EXCLUDED.timestamp,
+                    time_taken = EXCLUDED.time_taken,
+                    question_details = EXCLUDED.question_details
+                """,
+                (quiz_uuid, user_id, user["name"], result.score, result.total, datetime.utcnow(), result.time_taken, json.dumps(result.question_details))
+            )
                 
     return {"success": True}
 
