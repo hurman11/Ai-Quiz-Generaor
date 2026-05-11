@@ -32,23 +32,66 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from psycopg2.pool import SimpleConnectionPool
+
 # ─── DATABASE SETUP (NEON POSTGRES) ───
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     print("WARNING: DATABASE_URL not set. Falling back to in-memory mode if DB calls fail.")
 
-def get_db():
+# Connection Pool
+db_pool = None
+
+def init_db_pool():
+    global db_pool
+    if DATABASE_URL:
+        try:
+            db_pool = SimpleConnectionPool(
+                1, 20, # min, max connections
+                dsn=DATABASE_URL,
+                cursor_factory=RealDictCursor
+            )
+            print("Database connection pool initialized.")
+        except Exception as e:
+            print(f"Failed to init DB pool: {e}")
+
+@app.on_event("startup")
+def startup_event():
+    init_db_pool()
     try:
+        init_db()
+    except Exception as e:
+        print(f"Failed to init DB: {e}")
+
+def get_db():
+    if not db_pool:
+        # Fallback for local dev if pool failed
         conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
         conn.autocommit = True
         return conn
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"DB Connection Error: {str(e)}")
+    
+    conn = db_pool.getconn()
+    conn.autocommit = True
+    return conn
+
+def release_db(conn):
+    if db_pool:
+        db_pool.putconn(conn)
+
+# Helper to use in 'with' statement
+from contextlib import contextmanager
+@contextmanager
+def db_session():
+    conn = get_db()
+    try:
+        yield conn
+    finally:
+        release_db(conn)
 
 def init_db():
     if not DATABASE_URL:
         return
-    with get_db() as conn:
+    with db_session() as conn:
         with conn.cursor() as cur:
             # Users table
             cur.execute("""
@@ -89,11 +132,6 @@ def init_db():
                 cur.execute("ALTER TABLE results ADD COLUMN IF NOT EXISTS question_details JSONB")
             except Exception:
                 pass
-try:
-    init_db()
-except Exception as e:
-    print(f"Failed to init DB: {e}")
-
 # ─── AUTHENTICATION (JWT & BCRYPT) ───
 SECRET_KEY = os.getenv("JWT_SECRET", "super-secret-cyber-key-123")
 ALGORITHM = "HS256"
@@ -138,7 +176,7 @@ class UserLogin(BaseModel):
 @app.post("/auth/register")
 def register(user: UserRegister):
     try:
-        with get_db() as conn:
+        with db_session() as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT id FROM users WHERE email = %s", (user.email,))
                 if cur.fetchone():
@@ -160,7 +198,7 @@ def register(user: UserRegister):
 @app.post("/auth/login")
 def login(user: UserLogin):
     try:
-        with get_db() as conn:
+        with db_session() as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT id, name, email, password_hash FROM users WHERE email = %s", (user.email,))
                 db_user = cur.fetchone()
@@ -176,7 +214,7 @@ def login(user: UserLogin):
 
 @app.get("/auth/me")
 def get_me(user_id: int = Depends(get_current_user)):
-    with get_db() as conn:
+    with db_session() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT id, name, email FROM users WHERE id = %s", (user_id,))
             user = cur.fetchone()
@@ -202,7 +240,7 @@ def refresh_quiz_cache():
 
     print(f"Refreshing Quiz Cache from DB at {now}...")
     try:
-        with get_db() as conn:
+        with db_session() as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT data, quiz_uuid FROM active_quiz WHERE id = 1")
                 row = cur.fetchone()
@@ -249,7 +287,7 @@ def set_active_quiz(quiz: dict):
     quiz["quiz_uuid"] = new_uuid
     quiz["quiz_code"] = quiz_code
     
-    with get_db() as conn:
+    with db_session() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
@@ -269,7 +307,7 @@ def set_active_quiz(quiz: dict):
 
 @app.delete("/active-quiz")
 def clear_active_quiz():
-    with get_db() as conn:
+    with db_session() as conn:
         with conn.cursor() as cur:
             cur.execute("DELETE FROM active_quiz WHERE id = 1")
     
@@ -283,7 +321,7 @@ def clear_active_quiz():
 # ─── STUDENT CHECK & SUBMISSION ───
 @app.get("/student/check")
 def check_student(user_id: int = Depends(get_current_user)):
-    with get_db() as conn:
+    with db_session() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT quiz_uuid FROM active_quiz WHERE id = 1")
             active_row = cur.fetchone()
@@ -300,7 +338,7 @@ def check_student(user_id: int = Depends(get_current_user)):
 
 @app.get("/student/history")
 def get_student_history(user_id: int = Depends(get_current_user)):
-    with get_db() as conn:
+    with db_session() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT quiz_uuid, score, total, timestamp FROM results WHERE user_id = %s ORDER BY timestamp DESC", 
@@ -321,7 +359,7 @@ class SubmitAnswer(BaseModel):
 
 @app.post("/submit-answer")
 def submit_answer(ans: SubmitAnswer, user_id: int = Depends(get_current_user)):
-    with get_db() as conn:
+    with db_session() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT quiz_uuid, data FROM active_quiz WHERE id = 1")
             active_row = cur.fetchone()
@@ -364,7 +402,7 @@ def submit_answer(ans: SubmitAnswer, user_id: int = Depends(get_current_user)):
 
 @app.post("/submit-result")
 def submit_result(result: SubmitResult, user_id: int = Depends(get_current_user)):
-    with get_db() as conn:
+    with db_session() as conn:
         with conn.cursor() as cur:
             # Get active quiz
             cur.execute("SELECT quiz_uuid FROM active_quiz WHERE id = 1")
@@ -398,7 +436,7 @@ def submit_result(result: SubmitResult, user_id: int = Depends(get_current_user)
 # ─── TEACHER RESULTS ENDPOINTS ───
 @app.get("/results")
 def get_results():
-    with get_db() as conn:
+    with db_session() as conn:
         with conn.cursor() as cur:
             # We only return results for the CURRENT active quiz
             cur.execute("SELECT quiz_uuid FROM active_quiz WHERE id = 1")
@@ -423,7 +461,7 @@ def get_results():
 
 @app.delete("/results")
 def clear_results():
-    with get_db() as conn:
+    with db_session() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT quiz_uuid FROM active_quiz WHERE id = 1")
             active_row = cur.fetchone()
