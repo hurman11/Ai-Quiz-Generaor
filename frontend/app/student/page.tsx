@@ -31,10 +31,7 @@ interface LeaderboardEntry {
 const tabs: { key: TabKey; label: string; icon: string }[] = [
   { key: "active", label: "Active Quiz", icon: "🎯" },
   { key: "leaderboard", label: "Leaderboard", icon: "🏆" },
-  { key: "history", label: "My Results", icon: "📊" },
-];
-
-export default function StudentPage() {
+  { key: "history", label: "My Results", icon: "📊" }export default function StudentPage() {
   const router = useRouter();
   
   // App State
@@ -56,249 +53,138 @@ export default function StudentPage() {
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
   const [liveState, setLiveState] = useState<any>(null);
+
+  // Loading & Async State
+  const [statusMessage, setStatusMessage] = useState("Signing in...");
+  const [isTimeout, setIsTimeout] = useState(false);
+  const [retryAction, setRetryAction] = useState<(() => void) | null>(null);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const autoAdvanceRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const initialize = async () => {
-      const token = localStorage.getItem("student_token");
-      const sName = localStorage.getItem("student_name");
-      
-      if (!token || !sName) {
-        router.push("/student/login");
-        return;
-      }
-      setStudentName(sName);
+  const startStatusTimer = () => {
+    const startTime = Date.now();
+    setStatusMessage("Signing in...");
+    return setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      if (elapsed >= 20) setStatusMessage("This is taking longer than usual...");
+      else if (elapsed >= 9) setStatusMessage("Almost there, please wait...");
+      else if (elapsed >= 4) setStatusMessage("Connecting to server...");
+    }, 1000);
+  };
 
-      try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        
-        // 1. Check active quiz
-        const quizRes = await fetch(`${API_URL}/active-quiz`);
-        if (!quizRes.ok) {
-          setPhase("waiting");
-          return;
-        }
-        
-        const parsed = await quizRes.json();
-        
-        // Check if quiz requires code (either explicitly or if it has a quiz_code field)
-        if (parsed.requires_code || parsed.quiz_code) {
-          setPhase("enter_code");
-          return;
-        }
-        
-        // Backward compatibility (if backend doesn't require code)
-        setQuiz(parsed);
-        setUserAnswers(new Array(parsed.questions?.length || 0).fill(""));
-
-        // 2. Check registration status
-        const checkRes = await fetch(`${API_URL}/student/check`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        
-        if (checkRes.status === 401) {
-          localStorage.removeItem("student_token");
-          router.push("/student/login");
-          return;
-        }
-
-        if (checkRes.status === 403 || checkRes.status === 404) {
-          setPhase(checkRes.status === 403 ? "denied" : "waiting");
-        } else if (checkRes.ok) {
-          const data = await checkRes.json();
-          if (data.status === "completed") {
-            setPhase("denied");
-          } else {
-            setPhase("welcome");
-          }
-        } else {
-          setPhase("waiting");
-        }
-      } catch {
-        setPhase("waiting");
-      }
-    };
-    initialize();
-  }, [router]);
-
-  // Fetch History
-  useEffect(() => {
-    if (activeTab === "history") {
-      const fetchHistory = async () => {
-        setHistoryLoading(true);
-        try {
-          const token = localStorage.getItem("student_token");
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-          const res = await fetch(`${API_URL}/student/history`, {
-            headers: { "Authorization": `Bearer ${token}` }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setHistory(data.history || []);
-          }
-        } catch {
-          // ignore
-        } finally {
-          setHistoryLoading(false);
-        }
-      };
-      fetchHistory();
-    }
-  }, [activeTab]);
-
-  // Fetch Leaderboard
-  useEffect(() => {
-    if (activeTab === "leaderboard") {
-      const fetchLeaderboard = async () => {
-        setLeaderboardLoading(true);
-        try {
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-          const res = await fetch(`${API_URL}/results`);
-          if (res.ok) {
-            const data = await res.json();
-            // Sort by score descending, then by time taken ascending
-            const sortedResults = (data.results || []).sort((a: any, b: any) => {
-              if (b.score !== a.score) return b.score - a.score;
-              if (a.time_taken !== undefined && b.time_taken !== undefined) {
-                return a.time_taken - b.time_taken;
-              }
-              return 0;
-            });
-            setLeaderboard(sortedResults);
-          }
-        } catch {
-          // ignore
-        } finally {
-          setLeaderboardLoading(false);
-        }
-      };
-      fetchLeaderboard();
-      // Auto-refresh leaderboard every 5 seconds
-      const interval = setInterval(fetchLeaderboard, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [activeTab]);
-
-  // Timers cleanup
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
-    };
-  }, []);
-
-  // Poll for Live Mode State
-  useEffect(() => {
-    if (!quiz || phase === "loading" || phase === "enter_code" || phase === "denied" || phase === "waiting") return;
+  const initialize = async () => {
+    const token = localStorage.getItem("student_token");
+    const sName = localStorage.getItem("student_name");
     
-    let interval: any;
-    const pollQuiz = async () => {
-      try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const res = await fetch(`${API_URL}/active-quiz`);
-        if (res.ok) {
-          const parsed = await res.json();
-          if (parsed.live_state) {
-             setLiveState(parsed.live_state);
-             if (!quiz.live_state) {
-               setQuiz(parsed);
-             }
-          } else {
-             setLiveState(null);
-          }
-        }
-      } catch { /* ignore */ }
-    };
-    
-    interval = setInterval(pollQuiz, 1500);
-    return () => clearInterval(interval);
-  }, [quiz, phase]);
-
-  // Timer logic for quiz (async mode)
-  useEffect(() => {
-    if (phase !== "quiz" || selectedAnswer !== null) {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+    if (!token || !sName) {
+      router.push("/student/login");
       return;
     }
+    setStudentName(sName);
+    setPhase("loading");
+    setPinError("");
+    setIsTimeout(false);
+    setRetryAction(() => initialize);
 
-    setTimeLeft(TIMER_SECONDS);
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const interval = startStatusTimer();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      setIsTimeout(true);
+    }, 30000);
 
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      
+      const quizRes = await fetch(`${API_URL}/active-quiz`, { signal: controller.signal });
+      if (!quizRes.ok) {
+        clearInterval(interval);
+        clearTimeout(timeoutId);
+        setPhase("waiting");
+        return;
       }
-    };
-  }, [phase, currentIndex, selectedAnswer]);
+      
+      const parsed = await quizRes.json();
+      
+      if (parsed.requires_code || parsed.quiz_code) {
+        clearInterval(interval);
+        clearTimeout(timeoutId);
+        setPhase("enter_code");
+        return;
+      }
+      
+      setQuiz(parsed);
+      setUserAnswers(new Array(parsed.questions?.length || 0).fill(""));
 
-  // Auto-advance
-  useEffect(() => {
-    if (timeLeft === 0 && phase === "quiz" && selectedAnswer === null && quiz) {
-      autoAdvanceRef.current = setTimeout(() => {
-        if (currentIndex + 1 >= quiz.questions.length) {
-          completeQuiz();
-        } else {
-          setCurrentIndex((prev) => prev + 1);
-          setSelectedAnswer(null);
-        }
-      }, 1500);
+      const checkRes = await fetch(`${API_URL}/student/check`, {
+        headers: { "Authorization": `Bearer ${token}` },
+        signal: controller.signal
+      });
+      
+      clearInterval(interval);
+      clearTimeout(timeoutId);
 
-      return () => {
-        if (autoAdvanceRef.current) {
-          clearTimeout(autoAdvanceRef.current);
-          autoAdvanceRef.current = null;
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        if (checkData.status === "completed") {
+          setPhase("denied");
+          return;
         }
-      };
+      }
+      setPhase("welcome");
+    } catch (err: any) {
+      clearInterval(interval);
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError' || isTimeout) {
+        setPinError("Connection timed out. The server might be starting up.");
+        setIsTimeout(true);
+      } else {
+        setPinError("Network error. The server might be unreachable.");
+      }
     }
-  }, [timeLeft, phase, selectedAnswer, quiz, currentIndex]);
+  };
+
+  useEffect(() => {
+    initialize();
+  }, []);
 
   const joinWithPin = async (pin: string) => {
     if (!pin.trim()) return;
     setPinError("");
     setPhase("loading");
+    setIsTimeout(false);
+    setRetryAction(() => () => joinWithPin(pin));
+
+    const interval = startStatusTimer();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      setIsTimeout(true);
+    }, 30000);
     
     try {
       const token = localStorage.getItem("student_token");
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       
       const quizRes = await fetch(`${API_URL}/active-quiz?code=${pin.trim()}`, {
-        headers: { "Authorization": `Bearer ${token}` }
+        headers: { "Authorization": `Bearer ${token}` },
+        signal: controller.signal
       });
       
       if (!quizRes.ok) {
+        clearInterval(interval);
+        clearTimeout(timeoutId);
         setPinError("Invalid Game Pin");
         setPhase("enter_code");
         return;
       }
       
-      let parsed: Quiz | null = null;
-      try {
-        parsed = await quizRes.json();
-      } catch {
-        setPinError("Invalid server response");
-        setPhase("enter_code");
-        return;
-      }
+      const parsed = await quizRes.json();
       
-      // If backend is old and returned full quiz without checking pin:
       if (parsed && parsed.quiz_code && parsed.quiz_code !== pin.trim()) {
+        clearInterval(interval);
+        clearTimeout(timeoutId);
         setPinError("Invalid Game Pin");
         setPhase("enter_code");
         return;
@@ -309,8 +195,13 @@ export default function StudentPage() {
       setUserAnswers(new Array(parsed?.questions?.length || 0).fill(""));
 
       const checkRes = await fetch(`${API_URL}/student/check`, {
-        headers: { "Authorization": `Bearer ${token}` }
+        headers: { "Authorization": `Bearer ${token}` },
+        signal: controller.signal
       });
+      
+      clearInterval(interval);
+      clearTimeout(timeoutId);
+
       if (checkRes.ok) {
         const checkData = await checkRes.json();
         if (checkData.status === "completed") {
@@ -318,11 +209,16 @@ export default function StudentPage() {
            return;
         }
       }
-      
       setPhase("welcome");
-    } catch (error) {
-      console.error(error);
-      setPinError("Failed to verify Game Pin");
+    } catch (err: any) {
+      clearInterval(interval);
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError' || isTimeout) {
+        setPinError("Connection timed out. Please try again.");
+        setIsTimeout(true);
+      } else {
+        setPinError("Network error. The server might be sleeping.");
+      }
       setPhase("enter_code");
     }
   };
@@ -344,13 +240,107 @@ export default function StudentPage() {
     }
   }, [phase]);
 
-
-  const handleStartQuiz = () => {
-    if (quiz) {
-      setPhase("quiz");
-      setStartTime(Date.now());
+  // Fetch History
+  useEffect(() => {
+    if (activeTab === "history") {
+      const fetchHistory = async () => {
+        setHistoryLoading(true);
+        try {
+          const token = localStorage.getItem("student_token");
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+          const res = await fetch(`${API_URL}/student/history`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setHistory(data.history || []);
+          }
+        } catch { /* ignore */ } finally { setHistoryLoading(false); }
+      };
+      fetchHistory();
     }
-  };
+  }, [activeTab]);
+
+  // Fetch Leaderboard
+  useEffect(() => {
+    if (activeTab === "leaderboard") {
+      const fetchLeaderboard = async () => {
+        setLeaderboardLoading(true);
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+          const res = await fetch(`${API_URL}/results`);
+          if (res.ok) {
+            const data = await res.json();
+            const sortedResults = (data.results || []).sort((a: any, b: any) => {
+              if (b.score !== a.score) return b.score - a.score;
+              return (a.time_taken || 0) - (b.time_taken || 0);
+            });
+            setLeaderboard(sortedResults);
+          }
+        } catch { /* ignore */ } finally { setLeaderboardLoading(false); }
+      };
+      fetchLeaderboard();
+      const interval = setInterval(fetchLeaderboard, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
+
+  // Timers cleanup
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+    };
+  }, []);
+
+  // Poll for Live Mode State
+  useEffect(() => {
+    if (!quiz || ["loading", "enter_code", "denied", "waiting"].includes(phase)) return;
+    const interval = setInterval(async () => {
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const res = await fetch(`${API_URL}/active-quiz`);
+        if (res.ok) {
+          const parsed = await res.json();
+          if (parsed.live_state) {
+             setLiveState(parsed.live_state);
+             if (!quiz.live_state) setQuiz(parsed);
+          } else { setLiveState(null); }
+        }
+      } catch { /* ignore */ }
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [quiz, phase]);
+
+  // Timer logic for quiz
+  useEffect(() => {
+    if (phase !== "quiz" || selectedAnswer !== null) {
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      return;
+    }
+    setTimeLeft(TIMER_SECONDS);
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; } };
+  }, [phase, currentIndex, selectedAnswer]);
+
+  // Auto-advance
+  useEffect(() => {
+    if (timeLeft === 0 && phase === "quiz" && selectedAnswer === null && quiz) {
+      autoAdvanceRef.current = setTimeout(() => {
+        if (currentIndex + 1 >= quiz.questions.length) { completeQuiz(); }
+        else { setCurrentIndex((prev) => prev + 1); setSelectedAnswer(null); }
+      }, 1500);
+      return () => { if (autoAdvanceRef.current) { clearTimeout(autoAdvanceRef.current); autoAdvanceRef.current = null; } };
+    }
+  }, [timeLeft, phase, selectedAnswer, quiz, currentIndex]);
 
   const completeQuiz = async () => {
     const finalScore = userAnswers.reduce((acc, ans, idx) => {
@@ -437,7 +427,38 @@ export default function StudentPage() {
   };
 
   if (phase === "loading") {
-    return <main className="min-h-screen bg-transparent" />;
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-transparent p-4">
+        <motion.div 
+          className="edu-card max-w-sm w-full flex flex-col items-center gap-6 text-center"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <div className="relative">
+            <div className="h-20 w-20 rounded-full border-4 border-[var(--accent-purple)] border-t-transparent animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center text-2xl">
+              ⚡
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <h3 className="text-xl font-bold text-white animate-pulse">
+              {statusMessage}
+            </h3>
+            {pinError && <p className="text-red-400 text-sm">{pinError}</p>}
+          </div>
+
+          {isTimeout && retryAction && (
+            <button
+              onClick={() => retryAction()}
+              className="text-[var(--accent-cyan)] text-xs font-bold uppercase tracking-widest hover:underline"
+            >
+              🔄 Click here to retry
+            </button>
+          )}
+        </motion.div>
+      </main>
+    );
   }
 
   // --- Render Active Quiz Phase ---

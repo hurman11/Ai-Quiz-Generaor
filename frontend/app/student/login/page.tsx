@@ -9,13 +9,33 @@ export default function StudentLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [statusMessage, setStatusMessage] = useState("Signing in...");
+  const [isTimeout, setIsTimeout] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+
     setLoading(true);
     setError("");
+    setIsTimeout(false);
+    setStatusMessage("Signing in...");
+
+    const startTime = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      if (elapsed >= 20) setStatusMessage("This is taking longer than usual...");
+      else if (elapsed >= 9) setStatusMessage("Almost there, please wait...");
+      else if (elapsed >= 4) setStatusMessage("Connecting to server...");
+    }, 1000);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      setIsTimeout(true);
+    }, 30000);
 
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -23,7 +43,11 @@ export default function StudentLoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
+        signal: controller.signal
       });
+
+      clearInterval(interval);
+      clearTimeout(timeoutId);
 
       let data;
       try {
@@ -45,8 +69,15 @@ export default function StudentLoginPage() {
       localStorage.setItem("student_name", data.user.name);
       
       router.push("/student");
-    } catch {
-      setError("Network error. The server might be sleeping or unreachable.");
+    } catch (err: any) {
+      clearInterval(interval);
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError' || isTimeout) {
+        setError("Connection timed out. The server might be starting up.");
+        setIsTimeout(true);
+      } else {
+        setError("Network error. The server might be sleeping or unreachable.");
+      }
       setLoading(false);
     }
   };
@@ -97,6 +128,7 @@ export default function StudentLoginPage() {
                 placeholder="student@example.com"
                 className="edu-input w-full"
                 required
+                disabled={loading}
               />
             </div>
             
@@ -111,19 +143,45 @@ export default function StudentLoginPage() {
                 placeholder="••••••••"
                 className="edu-input w-full font-mono text-lg tracking-widest"
                 required
+                disabled={loading}
               />
             </div>
 
             {error && (
-              <p className="error-banner text-center">{error}</p>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col gap-3"
+              >
+                <p className="error-banner text-center">{error}</p>
+                {(isTimeout || error.includes("sleeping") || error.includes("starting")) && (
+                  <button
+                    type="button"
+                    onClick={handleLogin}
+                    className="text-[var(--accent-cyan)] text-xs font-bold uppercase tracking-widest hover:underline text-center"
+                  >
+                    🔄 Click here to retry
+                  </button>
+                )}
+              </motion.div>
             )}
 
             <button 
               type="submit" 
               disabled={loading}
-              className="btn-primary w-full mt-2 min-h-[52px] disabled:opacity-50"
+              className="btn-primary w-full mt-2 min-h-[52px] flex items-center justify-center gap-3 disabled:opacity-50"
             >
-              {loading ? "Signing in..." : "Sign In →"}
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span className="animate-pulse">{statusMessage}</span>
+                </>
+              ) : (
+                "Sign In →"
+              )}
             </button>
             
             <p className="text-center text-sm text-[var(--text-secondary)] mt-2">
@@ -136,5 +194,6 @@ export default function StudentLoginPage() {
         </div>
       </motion.div>
     </main>
+
   );
 }

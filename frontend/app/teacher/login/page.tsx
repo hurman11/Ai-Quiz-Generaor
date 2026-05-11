@@ -7,16 +7,60 @@ import { motion } from "framer-motion";
 export default function TeacherLoginPage() {
   const router = useRouter();
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("Signing in...");
+  const [isTimeout, setIsTimeout] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === "admin123") {
-      localStorage.setItem("teacher_auth", "true");
-      router.push("/teacher/dashboard");
-    } else {
-      setError(true);
-      setTimeout(() => setError(false), 3000);
+    if (loading) return;
+
+    setLoading(true);
+    setError("");
+    setIsTimeout(false);
+    setStatusMessage("Signing in...");
+
+    const startTime = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      if (elapsed >= 20) setStatusMessage("This is taking longer than usual...");
+      else if (elapsed >= 9) setStatusMessage("Almost there, please wait...");
+      else if (elapsed >= 4) setStatusMessage("Connecting to server...");
+    }, 1000);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      setIsTimeout(true);
+    }, 30000);
+
+    try {
+      // Even if login is local, we "ping" the backend to wake up the HF space 
+      // so the dashboard doesn't hang immediately after redirect.
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      await fetch(`${API_URL}/active-quiz`, { signal: controller.signal }).catch(() => {});
+
+      clearInterval(interval);
+      clearTimeout(timeoutId);
+
+      if (password === "admin123") {
+        localStorage.setItem("teacher_auth", "true");
+        router.push("/teacher/dashboard");
+      } else {
+        setError("Invalid PIN. Please try again.");
+        setLoading(false);
+      }
+    } catch (err: any) {
+      clearInterval(interval);
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError' || isTimeout) {
+        setError("Connection timed out. The server might be starting up.");
+        setIsTimeout(true);
+      } else {
+        setError("An error occurred. Please check your connection.");
+      }
+      setLoading(false);
     }
   };
 
@@ -61,24 +105,47 @@ export default function TeacherLoginPage() {
               placeholder="Enter Access PIN"
               className="edu-input text-center text-lg tracking-widest"
               required
+              disabled={loading}
             />
           </div>
 
           {error && (
-            <motion.p
+            <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
-              className="error-banner text-center"
+              className="flex flex-col gap-3"
             >
-              Invalid PIN. Try "admin123".
-            </motion.p>
+              <p className="error-banner text-center py-2 px-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                {error}
+              </p>
+              {(isTimeout || error.includes("error")) && (
+                <button
+                  type="button"
+                  onClick={handleLogin}
+                  className="text-[var(--accent-cyan)] text-xs font-bold uppercase tracking-widest hover:underline"
+                >
+                  🔄 Click here to retry
+                </button>
+              )}
+            </motion.div>
           )}
 
           <button
             type="submit"
-            className="btn-primary w-full mt-2"
+            disabled={loading}
+            className="btn-primary w-full mt-2 min-h-[52px] flex items-center justify-center gap-3 disabled:opacity-70"
           >
-            Authenticate
+            {loading ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span className="animate-pulse">{statusMessage}</span>
+              </>
+            ) : (
+              "Authenticate"
+            )}
           </button>
         </form>
         </div>
@@ -86,3 +153,4 @@ export default function TeacherLoginPage() {
     </main>
   );
 }
+
