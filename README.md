@@ -49,4 +49,4 @@ The frontend and backend talk to each other through a clean, well-documented RES
 
 ---
 
-*Built with ❤️ to make learning more interactive and teaching a little bit easier.*
+*Built with ❤️ by Arthur Leywin to make learning more interactive and teaching a little bit easier.*
