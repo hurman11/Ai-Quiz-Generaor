@@ -1,8 +1,8 @@
-# 🎓 AI Quiz Generator: Bringing Classrooms to Life with Llama 3
+# 🎓 Nexus: Bringing Classrooms to Life with Groq
 
 Imagine a classroom where teachers spend less time writing tests and more time inspiring students. Where every mistake a student makes isn't just a red mark on a paper, but an opportunity for a personalized mini-lesson from an AI tutor. 
 
-Welcome to the **AI Quiz Generator**—a platform designed to bridge the gap between educational material and interactive learning, powered by cutting-edge AI.
+Welcome to **Nexus** (an AI Quiz Generator)—a platform designed to bridge the gap between educational material and interactive learning, powered by cutting-edge AI.
 
 ## 📖 The Story
 
@@ -10,7 +10,7 @@ We built this project to solve a real-world problem: teachers are overwhelmed wi
 
 With this platform:
 1. **Teachers** simply upload their existing course materials (PDFs, Word documents, or plain text).
-2. **Our AI (powered by Groq & Llama 3)** instantly reads the material and crafts a high-quality, relevant multiple-choice quiz.
+2. **Our AI (powered by Groq)** instantly reads the material and crafts a high-quality, relevant multiple-choice quiz.
 3. **Students** join a live session, taking the quiz in real-time while the teacher watches the scores roll in.
 4. **The Magic:** When a student gets an answer wrong, our integrated **AI Tutor** steps in to explain *why*, ensuring they actually learn the concept rather than just memorizing the right letter.
 
@@ -22,7 +22,7 @@ We split the project into a robust Python backend and a lightning-fast React fro
 At its core, our backend acts as the brain of the operation, coordinating the AI, managing the live game state, and securely storing student data.
 
 *   **FastAPI & Uvicorn**: Chosen for their blazing speed to handle real-time classroom interactions.
-*   **Groq (Llama-3.3-70b-versatile)**: The star of the show. We use Groq's lightning-fast inference to generate quizzes on the fly and power our empathetic AI Tutor.
+*   **Groq**: The star of the show. We use Groq's lightning-fast inference to generate quizzes on the fly and power our empathetic AI Tutor.
 *   **PyPDF2 & python-docx**: We built a custom extraction pipeline so teachers can upload their existing `.pdf` and `.docx` files without needing to reformat anything.
 *   **PostgreSQL (Neon)**: A reliable, scalable database to keep track of user accounts, quiz histories, and real-time scores. We use `psycopg2-binary` to connect.
 *   **Security First**: We use `bcrypt` to hash passwords and `pyjwt` for secure, token-based authentication. `pydantic` ensures all data flowing through the API is clean and valid.
