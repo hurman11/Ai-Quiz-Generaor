@@ -471,7 +471,7 @@ def clear_results():
 
 
 # ─── GENERATION LOGIC (UNCHANGED) ───
-ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".txt"}
+ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".txt", ".pptx", ".ppt"}
 def get_extension(filename: str):
     return os.path.splitext(filename)[1].lower()
 
@@ -490,15 +490,44 @@ def extract_text_from_file(file_content: bytes, filename: str) -> str:
         import io
         doc = Document(io.BytesIO(file_content))
         return "\n".join([p.text for p in doc.paragraphs])
+    elif ext in {".pptx", ".ppt"}:
+        import io
+        from pptx import Presentation
+        prs = Presentation(io.BytesIO(file_content))
+        text = ""
+        for slide in prs.slides:
+            for shape in slide.shapes:
+                if shape.has_text_frame:
+                    for paragraph in shape.text_frame.paragraphs:
+                        text += paragraph.text + "\n"
+                if shape.has_table:
+                    for row in shape.table.rows:
+                        for cell in row.cells:
+                            text += cell.text + " "
+                    text += "\n"
+        return text
     else:
         raise HTTPException(status_code=400, detail="Unsupported file format")
 
 def build_prompt(context: str, question_count: int, difficulty: str, format_type: str) -> str:
+    hell_instructions = ""
+    if difficulty == "hell":
+        hell_instructions = """
+SPECIAL INSTRUCTIONS FOR HELL MODE:
+- Make every question EXTREMELY challenging and tricky.
+- Use subtle distractors that sound very plausible but are wrong.
+- Include questions that require deep understanding, critical thinking, and careful reading.
+- Add trick questions where the obvious answer is WRONG.
+- Use edge cases, exceptions, and nuanced details from the material.
+- Make wrong options very close to the correct answer to maximize confusion.
+- The quiz should feel brutally difficult — only someone who truly mastered the material should score above 50%.
+"""
     return f"""
 You are an expert educational AI. 
 Generate a quiz based ONLY on the provided context.
 Number of questions: {question_count}
 Difficulty level: {difficulty}
+{hell_instructions}
 Question format: {format_type} (If True/False, only provide 'True' and 'False' as options).
 
 IMPORTANT: Output valid JSON exactly matching this structure. Do not wrap in markdown or backticks.

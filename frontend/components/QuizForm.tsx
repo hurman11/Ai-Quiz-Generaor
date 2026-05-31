@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import type { Quiz } from "@/types/quiz";
 
 const QUESTION_COUNTS = [5, 10, 15, 20] as const;
-const DIFFICULTIES = ["easy", "medium", "hard"] as const;
+const DIFFICULTIES = ["easy", "medium", "hard", "hell"] as const;
 
 const difficultyStyles: Record<string, { active: string; label: string }> = {
   easy: {
@@ -20,15 +20,21 @@ const difficultyStyles: Record<string, { active: string; label: string }> = {
     active: "border-accent-red bg-accent-red/10 text-accent-red",
     label: "Hard",
   },
+  hell: {
+    active: "border-[#a855f7] bg-[rgba(168,85,247,0.1)] text-[#a855f7]",
+    label: "🔥 Hell",
+  },
 };
 
 const ALLOWED_TYPES = [
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/msword",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.ms-powerpoint",
   "text/plain",
 ];
-const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".doc", ".txt"];
+const ALLOWED_EXTENSIONS = [".pdf", ".docx", ".doc", ".pptx", ".ppt", ".txt"];
 
 export default function QuizForm() {
   const [material, setMaterial] = useState("");
@@ -285,7 +291,7 @@ export default function QuizForm() {
                   or drag and drop
                 </p>
                 <p className="text-xs text-text-secondary/70">
-                  PDF, DOCX, or TXT (max 10 MB)
+                  PDF, DOCX, PPTX, or TXT (max 10 MB)
                 </p>
               </>
             )}
@@ -295,7 +301,7 @@ export default function QuizForm() {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf,.docx,.doc,.txt"
+          accept=".pdf,.docx,.doc,.pptx,.ppt,.txt"
           onChange={handleFileChange}
           className="hidden"
           id="file-upload-input"
