@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import QuizForm from "@/components/QuizForm";
-import HostView from "@/components/HostView";
+
 import ThemeToggle from "@/components/ThemeToggle";
 import type { Quiz } from "@/types/quiz";
 import * as XLSX from "xlsx";
@@ -74,12 +74,12 @@ export default function TeacherDashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === "results" || activeQuiz?.live_state) {
+    if (activeTab === "results") {
       fetchResults();
-      const interval = setInterval(fetchResults, activeQuiz?.live_state ? 1500 : 5000);
+      const interval = setInterval(fetchResults, 5000);
       return () => clearInterval(interval);
     }
-  }, [activeTab, fetchResults, activeQuiz?.live_state]);
+  }, [activeTab, fetchResults]);
 
   const handleLogout = () => {
     localStorage.removeItem("teacher_auth");
@@ -99,12 +99,8 @@ export default function TeacherDashboardPage() {
     }
   };
 
-  const handleCopyLink = () => {
-    const link = typeof window !== "undefined" ? `${window.location.origin}/student` : "http://localhost:3000/student";
-    navigator.clipboard.writeText(link);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+
+
 
   const studentLink = typeof window !== "undefined" ? `${window.location.origin}/student` : "http://localhost:3000/student";
 
@@ -174,33 +170,7 @@ export default function TeacherDashboardPage() {
     }
   };
 
-  const handleHostLiveGame = async () => {
-    if (!activeQuiz) return;
-    const updatedQuiz: Quiz = { 
-      ...activeQuiz, 
-      live_state: { phase: "lobby", question_index: 0, start_time: Date.now() } 
-    };
-    
-    // Save locally
-    setActiveQuiz(updatedQuiz);
-    localStorage.setItem("active_quiz", JSON.stringify(updatedQuiz));
-    
-    // Push to backend
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    try {
-      await fetch(`${API_URL}/active-quiz`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedQuiz),
-      });
-    } catch {
-      // ignore
-    }
-  };
 
-  if (activeQuiz?.live_state) {
-    return <HostView activeQuiz={activeQuiz} setActiveQuiz={setActiveQuiz} results={results} registeredCount={registeredCount} />;
-  }
 
   return (
     <div className="flex min-h-screen flex-col pb-[64px] md:pb-0 bg-transparent">
@@ -307,27 +277,56 @@ export default function TeacherDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Game Pin */}
-                    <div className="rounded-xl border border-[var(--glass-border)] bg-[rgba(255,255,255,0.05)] p-6 text-center shadow-lg">
-                      <p className="mb-2 text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-widest">
-                        Game Pin
-                      </p>
-                      <div className="text-6xl sm:text-7xl font-black text-white tracking-widest font-mono drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-                        {activeQuiz.quiz_code || "------"}
+                    {/* QR Code & Game Pin */}
+                    <div className="rounded-xl border border-[var(--glass-border)] bg-[rgba(255,255,255,0.05)] p-6 shadow-lg">
+                      <div className="flex flex-col sm:flex-row items-center gap-6">
+                        {/* QR Code */}
+                        <div className="flex-shrink-0">
+                          <div className="bg-white p-3 rounded-2xl shadow-[0_0_30px_rgba(34,211,238,0.3)]">
+                            <img
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${studentLink}?pin=${activeQuiz.quiz_code}`)}`}
+                              alt="Scan to join quiz"
+                              className="w-40 h-40 sm:w-48 sm:h-48"
+                            />
+                          </div>
+                          <p className="text-center mt-3 text-xs font-semibold text-[var(--accent-cyan)] uppercase tracking-widest">
+                            Scan to Join
+                          </p>
+                        </div>
+
+                        {/* Pin & Info */}
+                        <div className="flex-1 text-center sm:text-left">
+                          <p className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-widest mb-2">
+                            Game Pin
+                          </p>
+                          <div className="text-5xl sm:text-6xl font-black text-white tracking-widest font-mono drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] mb-4">
+                            {activeQuiz.quiz_code || "------"}
+                          </div>
+                          <p className="text-sm text-[var(--text-secondary)]">
+                            Students can scan the QR code or enter the Game Pin at:
+                          </p>
+                          <p className="text-sm font-semibold text-[var(--accent-cyan)] mt-1 break-all">
+                            {studentLink}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
                     {/* Shareable Link */}
                     <div className="rounded-lg border border-[var(--glass-border)] bg-[rgba(255,255,255,0.05)] p-4">
                       <p className="mb-2 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
-                        Student Link
+                        Direct Join Link
                       </p>
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                         <code className="flex-1 rounded-md bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.1)] px-3 py-2 text-sm text-[var(--text-body)] break-all text-white font-mono">
-                          {studentLink}
+                          {studentLink}?pin={activeQuiz.quiz_code}
                         </code>
                         <button
-                          onClick={handleCopyLink}
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${studentLink}?pin=${activeQuiz.quiz_code}`);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          }}
                           className="btn-outline px-4 py-2 text-sm sm:w-auto"
                         >
                           {copied ? "Copied!" : "Copy"}
@@ -336,16 +335,10 @@ export default function TeacherDashboardPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-col sm:flex-row gap-4 mt-2">
-                      <button
-                        onClick={handleHostLiveGame}
-                        className="btn-primary flex-1 py-4 text-lg shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:shadow-[0_0_30px_rgba(34,211,238,0.5)]"
-                      >
-                        📺 Host Live Game
-                      </button>
+                    <div className="mt-2">
                       <button
                         onClick={handleClearQuiz}
-                        className="btn-danger flex-1 py-4 text-lg"
+                        className="btn-danger w-full py-4 text-lg"
                       >
                         Clear Active Quiz
                       </button>
